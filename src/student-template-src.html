@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Case of the Missing Interview Questions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Special+Elite&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+/*CSS*/
+<style>
+.qlist{counter-reset:q}
+.qrow{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.qrow .n{flex:none;width:30px;font-family:"Special Elite",monospace;color:var(--rust);padding-top:8px;text-align:right}
+.qrow textarea{flex:1;min-height:52px;resize:vertical;border:1px solid var(--line);border-radius:2px;padding:6px 10px;font-family:"Special Elite",monospace;font-size:15px;line-height:23px;color:var(--ink);background:repeating-linear-gradient(transparent 0 22px, rgba(140,100,60,.22) 22px 23px),#fbf4e3;background-attachment:local}
+.qrow textarea:focus{outline:2px solid var(--brown);outline-offset:1px}
+.qrow textarea[readonly]{background-color:#efe4cb;color:var(--ink2)}
+.qrow .x{flex:none;background:none;border:none;color:var(--muted);font-size:20px;line-height:1;padding:8px 2px}
+.qrow .x:hover{color:var(--red)}
+.addq{width:100%;margin:2px 0 16px;border-style:dashed;box-shadow:none;background:transparent}
+.target{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.35);border:1px solid var(--line);padding:8px 12px;border-radius:3px;margin:0 0 14px;font-size:15.5px}
+.target b{font-family:"Special Elite",monospace;font-weight:400;font-size:20px;color:var(--rust)}
+.proto{margin-top:6px}
+.proto h4.sec{font-family:"IM Fell English SC",serif;font-weight:400;font-size:19px;color:var(--brown);margin:22px 0 6px;letter-spacing:.04em}
+.brief{font-size:15.5px;color:var(--ink2);background:rgba(255,255,255,.35);border-left:3px solid var(--line);padding:8px 12px;margin:6px 0 10px}
+.prow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;border-top:1px dashed var(--line);padding:14px 0}
+@media (max-width:760px){.prow{grid-template-columns:1fr}}
+.prow .real{font-size:17.5px;line-height:1.45}
+.prow .real .num{font-family:"Special Elite",monospace;color:var(--rust);margin-right:6px}
+.prow .real ol{margin:4px 0 0;padding-left:22px;font-size:16px;color:var(--ink2)}
+.prow .mine{font-family:"Special Elite",monospace;font-size:14.5px;background:#fbf4e3;border:1px solid var(--line);padding:7px 10px;margin:0}
+.prow .mine.none{font-family:"EB Garamond",serif;font-style:italic;color:var(--muted);font-size:15.5px}
+.status{font-family:"Special Elite",monospace;font-size:13px;padding:2px 9px;border-radius:12px;border:1px solid;display:inline-block;margin-bottom:6px}
+.status.m{color:var(--ok);border-color:var(--ok);background:rgba(79,107,44,.09)}
+.status.p{color:#8a6015;border-color:#b0852e;background:rgba(200,150,40,.1)}
+.status.x{color:var(--miss);border-color:rgba(155,45,32,.5);border-style:dashed}
+.status.w{color:var(--muted);border-color:var(--line);margin-left:6px}
+.extras{border-top:1px dashed var(--line);padding-top:14px;margin-top:8px}
+.extras ul{margin:6px 0 0;padding-left:22px}
+.extras li{font-family:"Special Elite",monospace;font-size:14.5px;margin:4px 0}
+.extras .tag{font-family:"EB Garamond",serif;font-style:italic;color:var(--rust);font-size:14.5px}
+.legend{font-size:16px;color:var(--ink2);margin:4px 0 14px;font-style:italic}
+.box{margin-bottom:16px}
+.box label{display:block;font-family:"IM Fell English SC",serif;font-size:19px;color:var(--brown);margin-bottom:2px}
+.box label small{font-family:"Special Elite",monospace;font-size:13px;color:var(--rust);margin-left:6px}
+.box textarea{width:100%;min-height:300px;resize:vertical;border:1px solid var(--line);border-radius:2px;padding:4px 12px;font-family:"Special Elite",monospace;font-size:15px;line-height:23px;color:var(--ink);background:repeating-linear-gradient(transparent 0 22px, rgba(140,100,60,.22) 22px 23px),#fbf4e3;background-attachment:local;background-position:0 4px}
+.box textarea.short{min-height:170px}
+.box textarea:focus{outline:2px solid var(--brown);outline-offset:1px}
+.box textarea[readonly]{background-color:#efe4cb;color:var(--ink2)}
+.compare{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr)}
+@media (max-width:700px){.compare{grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr)}.compare .it{font-size:13px!important}}
+.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:1}
+.wires path.w{fill:none;stroke:#8c3b1f;stroke-width:2;opacity:.55;transition:opacity .15s,stroke-width .15s}
+.wires path.w.on{opacity:1;stroke-width:3.2}
+.wires.dim path.w:not(.on){opacity:.12}
+.col h4.colh{font-family:"IM Fell English",serif;font-weight:400;font-size:22px;margin:0 0 8px;border-bottom:2px solid var(--brown);padding-bottom:4px}
+.col h5{font-family:"IM Fell English SC",serif;font-weight:400;font-size:17px;color:var(--brown);margin:14px 0 6px}
+.it{position:relative;z-index:2;background:#fbf4e3;border:1px solid var(--line);border-radius:2px;padding:7px 10px;margin:0 0 8px;font-size:15.5px;line-height:1.4;transition:background .15s,border-color .15s}
+#colMine .it{font-family:"Special Elite",monospace;font-size:14px}
+.it.linked{border-color:var(--brown);border-left:4px solid var(--brown)}
+#colReal .it.linked{border-left:1px solid var(--brown);border-right:4px solid var(--brown)}
+.it.on{background:#fff3cf;border-color:var(--rust)}
+.it .num{font-family:"Special Elite",monospace;color:var(--rust);margin-right:5px}
+.it ol{margin:4px 0 0;padding-left:20px;font-size:14px;color:var(--ink2)}
+.brief2{font-size:14px;color:var(--ink2);font-style:italic;margin:0 0 8px}
+.savebar{align-items:center}
+.savebar label{font-size:18px;color:var(--brown)}
+.savebar input{font-family:"Special Elite",monospace;font-size:15px;padding:8px 10px;border:1px solid var(--line);background:#fbf4e3;border-radius:2px;min-width:220px;color:var(--ink)}
+.savebar input:focus{outline:2px solid var(--brown)}
+.rmodal{position:fixed;inset:0;background:rgba(20,10,4,.88);display:none;z-index:70;padding:18px;overflow:auto}
+.rmodal.show{display:block}
+.rbox{max-width:1000px;margin:0 auto;padding:20px 22px}
+.rtop{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.rtop h3{font-size:26px}
+.rtop .btn{white-space:nowrap;flex:none}
+.rtop p{margin:6px 0;font-size:16.5px}
+.rimg{border:1px solid var(--line);background:#fff;max-height:70vh;overflow:auto}
+.rimg img{display:block;width:100%;height:auto}
+.plainlist{list-style:none;padding-left:0!important}
+.plainlist li{margin:6px 0!important;padding-left:14px;border-left:3px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <svg width="78" height="78" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><radialGradient id="glass" cx="38%" cy="35%" r="70%"><stop offset="0" stop-color="#fff8e6" stop-opacity=".9"/><stop offset=".6" stop-color="#d9c29a" stop-opacity=".45"/><stop offset="1" stop-color="#8c6a42" stop-opacity=".5"/></radialGradient>
+      <linearGradient id="brass" x1="0" x2="1"><stop offset="0" stop-color="#7a5326"/><stop offset=".5" stop-color="#d4a35a"/><stop offset="1" stop-color="#6b4220"/></linearGradient></defs>
+      <rect x="58" y="62" width="14" height="40" rx="5" transform="rotate(-45 65 82)" fill="#3b2210" stroke="#1c0f06" stroke-width="2"/>
+      <rect x="57" y="55" width="12" height="12" transform="rotate(-45 63 61)" fill="url(#brass)"/>
+      <circle cx="40" cy="40" r="30" fill="url(#glass)" stroke="url(#brass)" stroke-width="7"/>
+      <path d="M24 32 A18 18 0 0 1 36 22" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".8"/>
+    </svg>
+    <div>
+      <h1 id="actTitle">The Case of the Missing Interview Questions</h1>
+      <p id="actSub"></p>
+    </div>
+    <button class="btn ghost crumb hidden" id="backBtn">&larr; All case files</button>
+  </header>
+
+  <!-- CASE SELECTION -->
+  <section id="viewSelect">
+    <div class="paper intro">
+      <div>
+        <h2>Your instructions, Detective</h2>
+        <ol>
+          <li><b>Choose a case file</b> below.</li>
+          <li><b>Study the clues</b>: the abstract, the research questions, and the findings.</li>
+          <li><b>Write the interview questions</b> you think the researchers asked their participants to answer those research questions.</li>
+          <li><b>Press &ldquo;Ready to Compare&rdquo;</b> to unseal the real interview protocol and receive your Deduction Score.</li>
+        </ol>
+      </div>
+      <div class="stamp">CONFIDENTIAL<br>221B BAKER ST.</div>
+    </div>
+    <div class="cases" id="cases"></div>
+  </section>
+
+  <!-- CASE VIEW -->
+  <section id="viewCase" class="hidden">
+    <div class="paper casehead">
+      <div class="lbl" id="cLabel"></div>
+      <h2 id="cTitle"></h2>
+      <div class="cite" id="cCite"></div>
+    </div>
+    <div class="grid">
+      <div id="exhibits"></div>
+      <aside class="paper notebook" id="notebook">
+        <h3>
+          <svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><rect x="58" y="62" width="14" height="40" rx="5" transform="rotate(-45 65 82)" fill="#3b2210"/><circle cx="40" cy="40" r="28" fill="#f3e7cc" stroke="#6b4226" stroke-width="8"/></svg>
+          Your Interview Protocol
+        </h3>
+        <p class="sub">Write the interview questions you would ask participants to answer this study&rsquo;s research questions. <b>Number each question</b> (1, 2, 3&hellip;) and start each one on a new line.</p>
+        <div class="target"><span>The real protocol had</span><b id="targetN">0</b><span id="targetS">questions.</span></div>
+        <div id="boxes"></div>
+        <button class="btn dark big" id="compareBtn" disabled>Ready to Compare</button>
+        <div class="hint" id="hint"></div>
+      </aside>
+    </div>
+
+    <div class="paper verdict" id="verdict">
+      <div class="vtop">
+        <svg id="gauge" width="210" height="210" viewBox="0 0 210 210" aria-label="Deduction score">
+          <defs><linearGradient id="brass2" x1="0" x2="1"><stop offset="0" stop-color="#6b4220"/><stop offset=".5" stop-color="#c9964d"/><stop offset="1" stop-color="#6b4220"/></linearGradient></defs>
+          <rect x="128" y="132" width="22" height="78" rx="7" transform="rotate(-45 139 171)" fill="#3b2210" stroke="#1c0f06" stroke-width="2"/>
+          <circle cx="92" cy="92" r="78" fill="#fbf3df" stroke="#d9c29a" stroke-width="16"/>
+          <circle id="gArc" cx="92" cy="92" r="78" fill="none" stroke="url(#brass2)" stroke-width="16" stroke-linecap="round" transform="rotate(-90 92 92)" stroke-dasharray="490" stroke-dashoffset="490" style="transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)"/>
+          <circle cx="92" cy="92" r="69" fill="none" stroke="#3b2210" stroke-width="1.5"/>
+          <text id="gNum" x="92" y="104" text-anchor="middle" font-family="Special Elite, monospace" font-size="50" fill="#2b1b10">0</text>
+          <text x="92" y="130" text-anchor="middle" font-family="IM Fell English SC, serif" font-size="15" fill="#7a5d42" letter-spacing="2">OUT OF 100</text>
+        </svg>
+        <div>
+          <div class="rank">DEDUCTION SCORE &middot; RANK</div>
+          <h2 id="rankName"></h2>
+          <p class="quip" id="quip"></p>
+          <div class="breakdown" id="breakdown"></div>
+        </div>
+      </div>
+      <h3 style="font-size:26px;margin-top:6px">Your protocol vs. the real protocol</h3>
+      <p class="legend">Arrows connect your questions to similar questions in the real protocol. Hover over a question to trace its connection.</p>
+      <div class="compare" id="compare">
+        <svg class="wires" id="wires"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8c3b1f"/></marker></defs></svg>
+        <div class="col" id="colMine"></div>
+        <div class="gutter"></div>
+        <div class="col" id="colReal"></div>
+      </div>
+      <details class="how">
+        <summary>How was my score calculated?</summary>
+        <p>Your whole protocol is compared with the researchers&rsquo; whole protocol:</p>
+        <ul>
+          <li><b>Coverage (80%)</b>: how much of the real protocol your questions cover, judged by key ideas (e.g. &ldquo;barriers,&rdquo; &ldquo;parents,&rdquo; &ldquo;transfer to other areas of life&rdquo;; synonyms count) and shared wording. Warm-up and closing questions count half.</li>
+          <li><b>Interview craft (20%)</b>: open-ended questions (How / What / Why / Describe / Tell me&hellip;) earn full credit; yes/no questions and questions that ask two things at once earn less.</li>
+        </ul>
+        <p>The scoring is automatic and approximate. It matches ideas and words, not meaning, so a good question phrased unusually may deserve more credit than it gets. Questions without an arrow may still be excellent; discuss them.</p>
+      </details>
+      <div class="vactions savebar">
+        <button class="btn dark" id="saveImgBtn">&#9000; Type up my case report (save as image)</button>
+        <span class="hint" id="saveHint" style="margin:0;text-align:left"></span>
+      </div>
+      <div class="vactions" style="border-top:none;padding-top:0;margin-top:12px">
+        <button class="btn" id="retryBtn">Reopen this case (clear)</button>
+        <button class="btn" id="otherBtn">Choose another case</button>
+      </div>
+      <textarea id="copyArea" readonly></textarea>
+    </div>
+  </section>
+
+  <footer>&ldquo;It is a capital mistake to theorize before one has data.&rdquo; &mdash; A. Conan Doyle, <i>A Scandal in Bohemia</i></footer>
+</div>
+
+<div class="lens" id="lens"></div>
+<div class="rmodal" id="rptModal" role="dialog" aria-modal="true" aria-labelledby="rptH">
+  <div class="rbox paper">
+    <div class="rtop">
+      <div>
+        <h3 id="rptH">Your case report is ready</h3>
+        <p>If it didn&rsquo;t download automatically, <b>right-click the image and choose &ldquo;Save image as&hellip;&rdquo;</b> (on a phone or tablet, <b>press and hold</b> the image, then Save). Then send the image to your instructor.</p>
+        <p class="note">Suggested file name: <span id="rptName" class="type"></span></p>
+      </div>
+      <button class="btn" id="rptClose">Close &times;</button>
+    </div>
+    <div class="rimg"><img id="rptImg" alt="Case report image"></div>
+  </div>
+</div>
+<div class="modal" id="modal"><button class="btn" id="modalClose">Close &times;</button><img id="modalImg" alt=""></div>
+
+<script>
+/* ============================ ACTIVITY DATA ============================ */
+const CONFIG=/*__CONFIG__*/null;
+const CFG=CONFIG||{id:"empty",title:"The Case of the Missing Interview Questions",subtitle:"No cases have been added to this activity yet.",cases:[]};
+function escH(s){return String(s==null?"":s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));}
+function paras(t){return String(t||"").trim().split(/\n\s*\n/).map(p=>`<p>${escH(p.trim()).replace(/\n/g,"<br>")}</p>`).join("");}
+function toCases(cfg){
+  return (cfg.cases||[]).map((k,i)=>{
+    const ex=[];
+    if((k.abstract||"").trim()) ex.push({t:"The Abstract",s:"As published",html:paras(k.abstract)});
+    const rqs=(k.rqs||[]).filter(x=>x.trim());
+    if(rqs.length) ex.push({t:"The Research Questions",s:"What the investigators set out to learn",html:(k.rqIntro?paras(k.rqIntro):"")+`<ul class="plainlist">${rqs.map(r=>`<li>${escH(r)}</li>`).join("")}</ul>`});
+    (k.clues||[]).forEach(cl=>{ if(!(cl.title||cl.text||(cl.images||[]).length)) return;
+      ex.push({t:escH(cl.title||"Additional Clue"),s:escH(cl.subtitle||"Recovered evidence"),html:paras(cl.text),imgs:(cl.images||[]).map(im=>({src:im.src,cap:escH(im.cap||"")}))}); });
+    const multi=(k.sections||[]).length>1;
+    return {id:"c"+(i+1),num:"No. "+(i+1),name:escH(k.name||"Untitled case"),rawName:k.name||"Untitled case",tagline:escH(k.tagline||""),title:escH(k.title||k.name||""),cite:escH(k.cite||""),
+      exhibits:ex, protoTitle:escH(k.protoTitle||"The Interview Protocol"),
+      sections:(k.sections||[]).map((sec,si)=>({h:multi?escH(sec.h||("Section "+(si+1))):null, rawH:sec.h||("Section "+(si+1)), brief:sec.brief?escH(sec.brief):"", rawBrief:sec.brief||"",
+        qs:(sec.qs||[]).map(q=>({t:escH(q.t),raw:q.t,subs:(q.subs||[]).length?q.subs.map(escH):null,rawSubs:q.subs||[],warm:!!sec.warm}))}))};
+  });
+}
+const CASES=toCases(CFG);
+document.title=CFG.title||document.title;
+
+/* ============================ SCORING ============================ */
+/* ===== generic auto-scorer (no hand-written key lists needed) ===== */
+const STOPW=new Set(("a an the of in on to and or for with by at from as is are was were be been being do does did doing how what which who whom whose why when where that this these those their theirs they them its it into about between other others than there here can could would should may might must will shall has have had having i you we our ours your yours his her hers him he she s me my mine any some if so please tell explain elaborate describe share talk walk through would like way ways also many much one ones get got make made really kind sort etc e g eg things thing something anything everything yourself yourselves feel felt think thinking believe believed regarding relation related role example examples provide not no yes all most more less very just well about being own both each either own same such then too again further once only").split(/\s+/));
+const SYN=[["barrier","obstacl","challeng","hinder","difficult","difficulti","struggl","hard","prevent","problem","constrain"],["help","support","assist","facilitat","enabl"],["defin","definit","meaning"],["importan","matter","valu","significan","worth"],["develop","grow","growth","learn","build","built"],["teacher","teach","educator","instructor","faculty","professor","staff"],["student","pupil","learner","kid","child"],["parent","famil","guardian","mother","father"],["school","campus","college","universit","institution"],["strateg","approach","techniqu","method","practic","tactic"],["relationship","rapport","bond","connect","trust"],["experienc","event","situation","moment","time","instanc","occasion"],["future","career","job","plan"],["abroad","overseas","international","travel","countr"],["transfer","apply","appli","carry","translat"],["factor","influenc","contribut","reason","cause","why"],["opinion","view","perspectiv","perceiv","percept","attitud"],["goal","purpos","aim","objectiv"],["skill","competenc","abilit"],["success","achiev","accomplish"],["year","long"],["advic","advis","recommend","suggest"],["improv","better","enhanc","strengthen"],["controvers","sensitiv"],["train","prepar","tool","resourc"],["identit","identif"],["expect","pressur"],["participat","involv","engag","join","enrol"],["benefit","gain","takeaway","outcom"],["environment","setting","classroom","climat","space"],["lead"],["languag","tongu","speak","bilingual"],["risk","danger","concern","harm","downsid"],["differ","compar","versus","vs","contrast"],["social","peer","friend"],["academ","grade","coursework"],["behavio","conduct","disciplin"],["veteran","vet","military","soldier","servic"],["sport","athlet","team","coach","game"],["global","world"],["citizen"],["decid","decision","chose","choos","pick"],["become","became","becom","start","first"],["else","add","discuss","miss"]];
+const CANON=new Map(); SYN.forEach((g,i)=>g.forEach(p=>CANON.set(p,"§"+i)));
+function canonTok(w){
+  for(const [p,id] of CANON){ if(w.startsWith(p)) return id; }
+  return w.replace(/(ships?|ations?|ings?|ments?|ness|ities|ity|ies|ied|ed|es|ly|s)$/,"").slice(0,6);
+}
+function normT(t){return t.toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9]+/g," ").trim();}
+function keyToks(t){const out=[]; normT(t).split(" ").forEach(w=>{ if(w.length>1&&!STOPW.has(w)){ const c=canonTok(w); if(!out.includes(c)) out.push(c);} }); return out;}
+function buildIndex(allQs){ // allQs: [{t,subs}]
+  const docs=allQs.map(q=>keyToks(q.t+" "+(q.subs||[]).join(" "))); const N=docs.length, df=new Map();
+  docs.forEach(d=>d.forEach(k=>df.set(k,(df.get(k)||0)+1)));
+  const ix=docs.map(d=>{const w=d.map(k=>({k,w:Math.pow(Math.log(1+N/(df.get(k))),2)})); const top=w.slice().sort((a,b)=>b.w-a.w).slice(0,6); return {all:new Set(d),top};});
+  const allW=ix.flatMap(x=>x.top.map(t=>t.w)); const mean=allW.length?allW.reduce((a,b)=>a+b,0)/allW.length:1;
+  ix.forEach(x=>{const tot=x.top.reduce((a,t)=>a+t.w,0); x.den=Math.max(tot,3*mean);}); return ix;
+}
+function pairScoreAuto(mine, idx){
+  const ks=new Set(keyToks(mine));
+  if(!ks.size) return 0;
+  const tot=idx.den||1; let m=0; idx.top.forEach(x=>{ if(ks.has(x.k)) m+=x.w; });
+  let cov=m/tot; if(idx.top.length>=4) cov=Math.min(1,cov*1.35);
+  let inter=0; ks.forEach(k=>{ if(idx.all.has(k)) inter++; });
+  const dice=2*inter/(ks.size+idx.all.size);
+  return Math.round(100*(.7*cov+.3*Math.min(1,dice*1.8)));
+}
+
+function craft(q){
+  const t=q.trim().toLowerCase().replace(/^["“(]+/,""); let s;
+  if(/^(how|what|why|describe|tell me|tell us|in what|to what|talk about|walk me|share|explain|can you describe|could you describe|can you tell|could you tell|can you explain|could you explain|can you talk|which|when|where|who|think about|please describe|please tell|please explain)\b/.test(t)) s=1;
+  else if(/^(do|does|did|is|are|was|were|have|has|had|would|will|can|could|should)\b/.test(t)) s=.5;
+  else s=.75;
+  const qm=(q.match(/\?/g)||[]).length;
+  if(qm>1) s-=.2;
+  return Math.max(0,s);
+}
+function parseQs(text){
+  const lines=text.split(/\n/); const out=[]; let cur=null; let numbered=false;
+  const re=/^\s*(?:Q\s*)?(\d+)\s*[\.\):\-]\s*(.*)$/i;
+  lines.forEach(l=>{const m=l.match(re); if(m){numbered=true; cur={t:m[2].trim()}; out.push(cur);} else if(l.trim()){ if(cur) cur.t+=(cur.t?" ":"")+l.trim(); else {cur={t:l.trim()}; out.push(cur);} }});
+  let items=out.filter(o=>o.t);
+  if(!numbered){ // fall back: split on question marks
+    items=text.split(/(?<=\?)\s+|\n+/).map(t=>({t:t.trim()})).filter(o=>o.t);
+  }
+  return items;
+}
+function evaluate(c){
+  const my=[]; c.sections.forEach((sec,si)=>{ parseQs(boxVal(si)).forEach((o,k)=>my.push({t:o.t,si,k,id:"m"+my.length})); });
+  const valid=my.filter(o=>o.t.split(/\s+/).length>=3);
+  const real=[]; c.sections.forEach((sec,si)=>sec.qs.forEach((q,k)=>real.push({q,si,k,id:"r"+real.length})));
+  const IDX=buildIndex(real.map(r=>({t:r.q.raw,subs:r.q.rawSubs})));
+  const M=valid.map(o=>real.map((r,j)=>pairScoreAuto(o.t,IDX[j])));
+  let wsum=0,ssum=0;
+  real.forEach((r,j)=>{let bs=0; valid.forEach((o,i)=>{bs=Math.max(bs,M[i][j]);}); const w=r.q.warm?.5:1; wsum+=w; ssum+=w*bs;});
+  const links=[]; valid.forEach((o,i)=>{let best=-1,bs=0; real.forEach((r,j)=>{if(M[i][j]>bs){bs=M[i][j];best=j;}}); if(best>=0&&bs>=50) links.push({from:o.id,to:real[best].id,s:bs});});
+  const coverage=wsum?ssum/wsum:0;
+  const craftAvg=valid.length?valid.reduce((a,o)=>a+craft(o.t),0)/valid.length:0;
+  return {my,real,links,overall:Math.round(.8*coverage+20*craftAvg),count:valid.length};
+}
+const RANKS=[
+  [70,"Sherlock Holmes","“Elementary.” Your protocol could almost pass for the original."],
+  [55,"Consulting Detective","Sharp work. Only a few lines of questioning escaped you."],
+  [38,"Dr. Watson","A capable protocol, though Holmes would point out what you left unasked."],
+  [20,"Inspector Lestrade","You found the trail, but large parts of the interview went unasked."],
+  [0,"Baffled Constable","“You see, but you do not observe.” Revisit the clues and try again."]
+];
+
+/* ============================ RENDERING ============================ */
+const $=id=>document.getElementById(id);
+const store={get(k){try{return JSON.parse(localStorage.getItem("iv:"+CFG.id+":"+k));}catch(e){return null;}},set(k,v){try{localStorage.setItem("iv:"+CFG.id+":"+k,JSON.stringify(v));}catch(e){}},del(k){try{localStorage.removeItem("iv:"+CFG.id+":"+k);}catch(e){}}};
+let current=null, locked=false, lastR=null;
+const countQs=c=>c.sections.reduce((a,s)=>a+s.qs.length,0);
+
+const PRINT=`<svg class="print" viewBox="0 0 100 120" fill="none" stroke="#3b2210" stroke-width="2.4"><path d="M50 10c-22 0-36 18-36 42"/><path d="M50 20c-16 0-28 14-28 34 0 14 4 26 10 36"/><path d="M50 30c-11 0-20 10-20 24 0 18 6 34 16 48"/><path d="M50 40c-6 0-12 6-12 14 0 22 8 38 18 52"/><path d="M50 50c-2 0-4 2-4 6 0 20 6 36 16 50"/><path d="M50 10c22 0 36 18 36 42 0 10-2 22-6 32"/><path d="M50 20c16 0 28 14 28 34 0 16-4 30-10 42"/><path d="M50 30c11 0 20 10 20 24 0 16-4 30-10 42"/><path d="M50 40c6 0 12 6 12 14 0 14-2 26-8 38"/></svg>`;
+function marker(n){return `<svg class="marker" viewBox="0 0 44 40" aria-hidden="true"><path d="M4 36 L14 4 H30 L40 36 Z" fill="#e2b545" stroke="#6b4a10" stroke-width="1.5"/><path d="M4 36 H40" stroke="#6b4a10" stroke-width="2"/><text x="22" y="29" text-anchor="middle" font-family="Special Elite, monospace" font-size="17" fill="#1d140c">${n}</text></svg>`;}
+
+function renderCases(){
+  $("cases").innerHTML=CASES.map(c=>{
+    const saved=store.get(c.id); const st=saved&&saved.result!=null?`<span class="status solved">SOLVED · ${saved.result}</span>`:`<span class="status">UNSOLVED</span>`;
+    return `<button class="folder" data-id="${c.id}"><span class="tab">CASE FILE ${c.num}</span><div class="body">${st}<div class="lbl">THE MATTER OF</div><h3>${c.name}</h3><p>${c.tagline}</p>${PRINT}</div></button>`;
+  }).join("");
+  document.querySelectorAll(".folder").forEach(b=>b.onclick=()=>{location.hash="case-"+b.dataset.id;});
+}
+
+const boxVal=i=>{const t=document.querySelector(`#boxes textarea[data-i="${i}"]`); return t?t.value:"";};
+function renderBoxes(vals){
+  const c=current, multi=c.sections.length>1;
+  $("boxes").innerHTML=c.sections.map((sec,i)=>`<div class="box">${multi?`<label for="b${i}">${sec.h}<small>(${sec.qs.length} questions)</small></label>`:""}<textarea id="b${i}" data-i="${i}" class="${multi&&sec.qs.length<6?"short":""}" ${locked?"readonly":""} aria-label="${multi?sec.h:"Your interview questions"}" placeholder="${i===0?"1. \n2. \n3. ":"1. \n2. "}">${escH(vals[i]||"")}</textarea></div>`).join("");
+  document.querySelectorAll("#boxes textarea").forEach(t=>t.addEventListener("input",save));
+}
+const allVals=()=>current.sections.map((_,i)=>boxVal(i));
+function save(){ if(!current) return; const s=store.get(current.id)||{}; s.v=allVals(); store.set(current.id,s); updateBtn(); }
+function updateBtn(){
+  const k=current.sections.reduce((a,_,i)=>a+parseQs(boxVal(i)).filter(o=>o.t.split(/\s+/).length>=3).length,0);
+  $("compareBtn").disabled=locked||k<3;
+  $("hint").textContent=locked?"Case closed. Reopen it to start fresh.":k<3?`Write at least 3 numbered questions to unseal the file (${k}/3).`:`${k} question${k>1?"s":""} drafted.`;
+}
+
+function openCase(c){
+  current=c;
+  $("viewSelect").classList.add("hidden"); $("viewCase").classList.remove("hidden"); $("backBtn").classList.remove("hidden");
+  $("cLabel").textContent="CASE FILE "+c.num+" · "+c.rawName.toUpperCase();
+  $("cTitle").innerHTML=c.title; $("cCite").innerHTML=c.cite;
+  $("targetN").textContent=countQs(c);
+  $("targetS").textContent=c.sections.length>1?`questions, in ${c.sections.length} sections:`:"questions.";
+  $("exhibits").innerHTML=c.exhibits.map((e,i)=>{
+    const body=(e.html||"")+(e.imgs||[]).map(im=>`<figure class="ev"><span class="pin"></span><img src="${im.src}" alt="${im.cap}"><figcaption><span>${im.cap}</span><span>hover to magnify · click to enlarge</span></figcaption></figure>`).join("");
+    return `<div class="paper exhibit ${i<2?"open":""}"><button class="exh-head" aria-expanded="${i<2}">${marker(i+1)}<span class="t"><b>Clue ${String.fromCharCode(65+i)}: ${e.t}</b><span>${e.s}</span></span><span class="chev">&#9656;</span></button><div class="exh-body">${body}</div></div>`;
+  }).join("");
+  document.querySelectorAll(".exh-head").forEach(h=>h.onclick=()=>{const ex=h.parentElement; ex.classList.toggle("open"); h.setAttribute("aria-expanded",ex.classList.contains("open"));});
+  wireImages();
+  const saved=store.get(c.id)||{};
+  locked=!!(saved.locked&&saved.result!=null);
+  renderBoxes(saved.v||[]);
+  $("verdict").classList.remove("show"); $("copyArea").style.display="none";
+  updateBtn();
+  if(locked) reveal(false);
+  window.scrollTo({top:0});
+}
+function showSelect(){current=null; $("viewCase").classList.add("hidden"); $("viewSelect").classList.remove("hidden"); $("backBtn").classList.add("hidden"); renderCases(); window.scrollTo({top:0});}
+function route(){const m=location.hash.match(/^#case-(\w+)/); const c=m&&CASES.find(x=>x.id===m[1]); c?openCase(c):showSelect();}
+
+function reveal(animate=true){
+  const c=current, R=evaluate(c); lastR=R;
+  locked=true; renderBoxes(allVals()); updateBtn();
+  const s=store.get(c.id)||{}; s.v=allVals(); s.result=R.overall; s.locked=true; store.set(c.id,s);
+  const rank=RANKS.find(r=>R.overall>=r[0]);
+  $("rankName").textContent=rank[1]; $("quip").textContent=rank[2];
+  $("breakdown").innerHTML="";
+  const linkedFrom=new Set(R.links.map(l=>l.from)), linkedTo=new Set(R.links.map(l=>l.to));
+  const multi=c.sections.length>1;
+  $("colMine").innerHTML=`<h4 class="colh">Your questions</h4>`+c.sections.map((sec,si)=>{
+    const items=R.my.filter(o=>o.si===si);
+    return (multi?`<h5>${sec.h}</h5>`:"")+(items.length?items.map((o,k)=>`<div class="it ${linkedFrom.has(o.id)?"linked":""}" data-id="${o.id}"><span class="num">${k+1}.</span>${escH(o.t)}</div>`).join(""):`<p class="brief2">(left blank)</p>`);
+  }).join("");
+  $("colReal").innerHTML=`<h4 class="colh">${c.protoTitle}</h4>`+c.sections.map((sec,si)=>
+    (multi?`<h5>${sec.h}</h5>`:"")+(sec.brief?`<p class="brief2">${sec.brief}</p>`:"")+
+    R.real.filter(r=>r.si===si).map(r=>`<div class="it ${linkedTo.has(r.id)?"linked":""}" data-id="${r.id}"><span class="num">${r.k+1}.</span>${r.q.t}${r.q.subs?`<ol type="${r.q.subs.length>4?"i":"a"}">${r.q.subs.map(x=>`<li>${x}</li>`).join("")}</ol>`:""}</div>`).join("")
+  ).join("");
+  wireHover();
+  current._report=buildReport(c,R,rank);
+  const v=$("verdict"); v.classList.add("show");
+  const arc=$("gArc"), num=$("gNum");
+  if(animate){
+    arc.style.strokeDashoffset=490; num.textContent="0";
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{arc.style.strokeDashoffset=490*(1-R.overall/100);}));
+    const t0=performance.now(); const tick=t=>{const k=Math.min(1,(t-t0)/1400); num.textContent=Math.round(R.overall*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(tick);}; requestAnimationFrame(tick);
+    setTimeout(()=>v.scrollIntoView({behavior:"smooth",block:"start"}),60);
+  } else { arc.style.strokeDashoffset=490*(1-R.overall/100); num.textContent=R.overall; }
+  drawWires(); setTimeout(drawWires,600);
+}
+function drawWires(){
+  if(!lastR||!$("verdict").classList.contains("show")) return;
+  const svg=$("wires"), box=$("compare").getBoundingClientRect();
+  svg.querySelectorAll("path.w").forEach(p=>p.remove());
+  lastR.links.forEach(l=>{
+    const a=document.querySelector(`#colMine .it[data-id="${l.from}"]`), b=document.querySelector(`#colReal .it[data-id="${l.to}"]`);
+    if(!a||!b) return;
+    const ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+    const x1=ra.right-box.left, y1=ra.top+ra.height/2-box.top, x2=rb.left-box.left-2, y2=rb.top+Math.min(rb.height/2,22)-box.top;
+    const dx=Math.max(30,(x2-x1)*.6);
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",`M${x1} ${y1} C${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`);
+    p.setAttribute("class","w"); p.setAttribute("marker-end","url(#ah)");
+    p.dataset.from=l.from; p.dataset.to=l.to;
+    svg.appendChild(p);
+  });
+}
+function wireHover(){
+  const svg=$("wires");
+  document.querySelectorAll("#compare .it").forEach(el=>{
+    el.onmouseenter=()=>{
+      const id=el.dataset.id; const ps=[...svg.querySelectorAll("path.w")].filter(p=>p.dataset.from===id||p.dataset.to===id);
+      if(!ps.length) return;
+      svg.classList.add("dim");
+      ps.forEach(p=>{p.classList.add("on"); document.querySelectorAll(`#compare .it[data-id="${p.dataset.from}"],#compare .it[data-id="${p.dataset.to}"]`).forEach(x=>x.classList.add("on"));});
+    };
+    el.onmouseleave=()=>{svg.classList.remove("dim"); svg.querySelectorAll("path.on").forEach(p=>p.classList.remove("on")); document.querySelectorAll("#compare .it.on").forEach(x=>x.classList.remove("on"));};
+  });
+}
+window.addEventListener("resize",drawWires);
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawWires);
+document.addEventListener("toggle",drawWires,true);
+function buildReport(c,R,rank){
+  let s=`CASE FILE ${c.num}: ${c.name}\nDeduction Score: ${R.overall}/100 (${rank[1]})\n\nMY INTERVIEW QUESTIONS:\n`;
+  c.sections.forEach((sec,si)=>{ if(c.sections.length>1) s+=`\n${sec.h}\n`; R.my.filter(o=>o.si===si).forEach((o,k)=>{s+=`${k+1}. ${o.t}\n`;}); });
+  return s.trim();
+}
+
+$("compareBtn").onclick=()=>reveal(true);
+$("backBtn").onclick=$("otherBtn").onclick=()=>{location.hash="";};
+$("retryBtn").onclick=()=>{store.del(current.id); locked=false; lastR=null; openCase(current);};
+/* ============ typewriter sound (synthesized, no files) ============ */
+let AC=null;
+function typewriterSound(){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const t0=AC.currentTime+0.02, sr=AC.sampleRate;
+    const noise=AC.createBuffer(1,Math.floor(sr*0.06),sr), d=noise.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,6);
+    const master=AC.createGain(); master.gain.value=0.55; master.connect(AC.destination);
+    const key=(t,vol=1)=>{
+      const s=AC.createBufferSource(); s.buffer=noise; s.playbackRate.value=0.8+Math.random()*0.5;
+      const bp=AC.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=1800+Math.random()*1600; bp.Q.value=1.2;
+      const g=AC.createGain(); g.gain.value=vol;
+      s.connect(bp); bp.connect(g); g.connect(master); s.start(t);
+      const o=AC.createOscillator(), og=AC.createGain(); o.type="square"; o.frequency.value=120+Math.random()*40;
+      og.gain.setValueAtTime(0.18*vol,t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.03);
+      o.connect(og); og.connect(master); o.start(t); o.stop(t+0.04);
+    };
+    let t=t0;
+    for(let i=0;i<16;i++){ key(t, i%5===4?0.6:1); t+=0.06+Math.random()*0.07; if(i===7) t+=0.12; }
+    // margin bell
+    [0,1].forEach(k=>{const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.value=k?5280:2640;
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(k?0.08:0.25,t+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t+1.1);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+1.2);});
+    // carriage return: ratcheting zip + thunk
+    const cr=t+0.25;
+    for(let i=0;i<10;i++) key(cr+i*0.028,0.35);
+    key(cr+0.32,1.2);
+    return (cr+0.4-AC.currentTime)*1000;
+  }catch(e){ return 0; }
+}
+
+/* ============ save report as a typewritten PNG ============ */
+function wrapText(ctx,text,maxW){
+  const words=String(text).split(/\s+/).filter(Boolean), lines=[]; let line="";
+  words.forEach(w=>{const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW&&line){lines.push(line); line=w;} else line=t;});
+  if(line) lines.push(line); return lines.length?lines:[""];
+}
+function slug(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
+function rng(seed){let s=seed>>>0; return ()=>((s=(s*1664525+1013904223)>>>0)/4294967296);}
+async function renderReportPNG(){
+  const c=current, R=lastR, rank=RANKS.find(r=>R.overall>=r[0]);
+  try{ await Promise.all(['16px "Special Elite"','16px "IM Fell English SC"'].map(f=>document.fonts.load(f))); }catch(e){}
+  const TW='"Special Elite", "Courier New", monospace';
+  const rand=rng(12345+R.overall);
+  const W=1400, SX=70, SW=W-2*SX, PM=56, CL=SX+PM, CR=SX+SW-PM, GUT=130, CW=(CR-CL-GUT)/2, LX=CL, RX=CL+CW+GUT, PAD=10;
+  const meas=document.createElement("canvas").getContext("2d");
+  const BODY=`14px ${TW}`, SMALL=`13px ${TW}`;
+  // ---- layout ----
+  const HEAD=420, mine=[], real=[], heads=[];
+  const layoutCol=(isMine)=>{
+    let yy=HEAD+64;
+    c.sections.forEach((sec,si)=>{
+      if(c.sections.length>1){ heads.push({x:isMine?LX:RX,y:yy,t:sec.rawH.toUpperCase()}); yy+=32; }
+      if(!isMine&&sec.brief){ meas.font=SMALL; const ls=wrapText(meas,"[Briefing] "+sec.rawBrief,CW); heads.push({x:RX,y:yy,brief:ls}); yy+=ls.length*19+12; }
+      const items=isMine?R.my.filter(o=>o.si===si):R.real.filter(r=>r.si===si);
+      if(isMine&&!items.length){ heads.push({x:LX,y:yy,brief:["(left blank)"]}); yy+=30; }
+      items.forEach((o,k)=>{
+        meas.font=BODY; const num=isMine?`${k+1}. `:`${o.k+1}. `;
+        const lines=wrapText(meas,num+(isMine?o.t:o.q.raw),CW-2*PAD); const subs=[];
+        if(!isMine&&o.q.subs){ meas.font=SMALL; o.q.rawSubs.forEach((s,j)=>wrapText(meas,`${o.q.subs.length>4?["i","ii","iii","iv","v","vi","vii","viii","ix","x"][j]:"abcdefghij"[j]}) ${s}`,CW-2*PAD-24).forEach(l=>subs.push(l))); }
+        const h=PAD*2+lines.length*21+subs.length*19+(subs.length?4:0)-4;
+        (isMine?mine:real).push({id:o.id,y:yy,h,lines,subs}); yy+=h+10;
+      });
+      yy+=8;
+    });
+    return yy;
+  };
+  const H=Math.max(layoutCol(true),layoutCol(false))+110;
+  // ---- canvas ----
+  const S=2, cv=document.createElement("canvas"); cv.width=W*S; cv.height=H*S;
+  const ctx=cv.getContext("2d"); ctx.scale(S,S);
+  // wooden desk
+  const wg=ctx.createLinearGradient(0,0,W,H); wg.addColorStop(0,"#5a3820"); wg.addColorStop(.5,"#4a2c18"); wg.addColorStop(1,"#3a2212");
+  ctx.fillStyle=wg; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<260;i++){ const y=rand()*H; ctx.strokeStyle=`rgba(${rand()<.5?"20,10,4":"120,80,45"},${.08+rand()*.12})`; ctx.lineWidth=.6+rand()*1.8;
+    ctx.beginPath(); ctx.moveTo(0,y); for(let x=0;x<=W;x+=70) ctx.lineTo(x,y+Math.sin(x/180+i)*3*rand()); ctx.stroke(); }
+  // paper sheet with shadow
+  ctx.save(); ctx.shadowColor="rgba(0,0,0,.55)"; ctx.shadowBlur=26; ctx.shadowOffsetY=10;
+  ctx.fillStyle="#f2e6c9"; ctx.fillRect(SX,40,SW,H-80); ctx.restore();
+  const pg=ctx.createRadialGradient(SX+SW*.3,200,50,SX+SW*.5,H/2,Math.max(SW,H)*.75); pg.addColorStop(0,"rgba(255,252,240,.55)"); pg.addColorStop(1,"rgba(160,115,55,.22)");
+  ctx.fillStyle=pg; ctx.fillRect(SX,40,SW,H-80);
+  for(let i=0;i<(SW*H)/900;i++){ ctx.fillStyle=`rgba(110,75,35,${rand()*.07})`; ctx.fillRect(SX+rand()*SW,40+rand()*(H-80),1+rand()*1.5,1+rand()*1.5); }
+  // coffee ring
+  ctx.strokeStyle="rgba(120,75,30,.13)"; ctx.lineWidth=5; ctx.beginPath(); ctx.arc(SX+SW-170,H-190,58,0.3,5.9); ctx.stroke();
+  ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(SX+SW-170,H-190,52,0,6.28); ctx.stroke();
+  // paper clip
+  ctx.strokeStyle="#9aa0a6"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(SX+90,62); ctx.lineTo(SX+90,18); ctx.arc(SX+100,18,10,Math.PI,0); ctx.lineTo(SX+110,72); ctx.arc(SX+97,72,13,0,Math.PI); ctx.lineTo(SX+84,30); ctx.stroke();
+  // typewritten text helper: per-character ink variation
+  const type=(str,x,y,font,color="#1f1610",spacing=0)=>{
+    ctx.font=font; let cx=x;
+    for(const ch of String(str)){ ctx.globalAlpha=.72+rand()*.28; ctx.fillStyle=color; ctx.fillText(ch,cx+(rand()-.5)*.6,y+(rand()-.5)*.9); cx+=ctx.measureText(ch).width+spacing; }
+    ctx.globalAlpha=1; return cx;
+  };
+  const center=(str,y,font,color,spacing=0)=>{ ctx.font=font; const w=[...str].reduce((a,ch)=>a+ctx.measureText(ch).width+spacing,0); type(str,(W-w)/2,y,font,color,spacing); };
+  ctx.textBaseline="alphabetic";
+  center("221B BAKER STREET  ·  CONSULTING DETECTIVE AGENCY",100,`14px ${TW}`,"#5a3e28",1);
+  center("C A S E   R E P O R T",150,`36px ${TW}`,"#1f1610",2);
+  ctx.strokeStyle="rgba(31,22,16,.75)"; ctx.lineWidth=1.2; [168,173].forEach(y=>{ctx.beginPath(); ctx.moveTo(CL,y); ctx.lineTo(CR,y); ctx.stroke();});
+  const L=`16px ${TW}`; let y=212;
+  const field=(k,v)=>{ type(k,CL,y,L,"#5a3e28"); type(v,CL+150,y,L); y+=30; };
+  field("FILE NO.:",`${c.num.replace("No. ","")}  —  ${c.rawName.toUpperCase()}`);
+  field("DATE FILED:",new Date().toLocaleString([], {dateStyle:"long",timeStyle:"short"}));
+  ctx.font=`14px ${TW}`; const re=wrapText(ctx,(CFG.cases[CASES.indexOf(c)].cite||"—"),CR-CL-150-250);
+  type("RE:",CL,y,L,"#5a3e28"); re.forEach((l,i)=>type(l,CL+150,y+i*21,`14px ${TW}`)); y+=re.length*21+12;
+  type("FINDING:",CL,y,L,"#5a3e28"); type(`Deduction score of ${R.overall} out of 100.`,CL+150,y,L); y+=26;
+  type("RANK:",CL,y,L,"#5a3e28"); type(rank[1].toUpperCase(),CL+150,y,`18px ${TW}`); y+=26;
+  ctx.font=`14px ${TW}`; wrapText(ctx,rank[2],CR-CL-150-250).forEach((l,i)=>type(l,CL+150,y+i*20,`14px ${TW}`,"#4a3020"));
+  // red rubber stamp with score
+  ctx.save(); ctx.translate(CR-120,262); ctx.rotate(-0.16);
+  ctx.globalAlpha=.82; ctx.strokeStyle="#a3271a"; ctx.fillStyle="#a3271a";
+  ctx.lineWidth=5; ctx.beginPath(); ctx.arc(0,0,92,0,Math.PI*2); ctx.stroke(); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,80,0,Math.PI*2); ctx.stroke();
+  ctx.textAlign="center"; ctx.font=`16px ${TW}`; ctx.fillText("CASE CLOSED",0,-40);
+  ctx.font=`54px ${TW}`; ctx.fillText(String(R.overall),0,20); ctx.font=`15px ${TW}`; ctx.fillText("OUT OF 100",0,46);
+  ctx.globalCompositeOperation="destination-out"; for(let i=0;i<260;i++){ ctx.globalAlpha=rand()*.5; ctx.fillRect((rand()-.5)*200,(rand()-.5)*200,1+rand()*3,1+rand()*2); }
+  ctx.restore(); ctx.textAlign="left";
+  // divider
+  type("- ".repeat(Math.floor((CR-CL)/17)),CL,HEAD-6,`14px ${TW}`,"#7a5d42");
+  type("EXHIBIT A: YOUR QUESTIONS",LX,HEAD+34,`17px ${TW}`); type("EXHIBIT B: THE ORIGINAL PROTOCOL",RX,HEAD+34,`17px ${TW}`);
+  ctx.strokeStyle="rgba(31,22,16,.7)"; ctx.lineWidth=1.2; [LX,RX].forEach(x=>{ctx.beginPath(); ctx.moveTo(x,HEAD+43); ctx.lineTo(x+CW,HEAD+43); ctx.stroke();});
+  heads.forEach(h=>{ if(h.t) type(h.t,h.x,h.y+16,`14px ${TW}`,"#7a3a1c",.5); else h.brief.forEach((l,i)=>type(l,h.x,h.y+13+i*19,SMALL,"#5a4030")); });
+  const linkedFrom=new Set(R.links.map(l=>l.from)), linkedTo=new Set(R.links.map(l=>l.to));
+  const drawItem=(b,x,isMine)=>{
+    const linked=isMine?linkedFrom.has(b.id):linkedTo.has(b.id);
+    ctx.fillStyle="rgba(255,250,235,.55)"; ctx.fillRect(x,b.y,CW,b.h);
+    ctx.strokeStyle=linked?"rgba(163,39,26,.75)":"rgba(90,62,40,.35)"; ctx.lineWidth=linked?1.4:1; ctx.setLineDash(linked?[]:[4,3]);
+    ctx.strokeRect(x+.5,b.y+.5,CW-1,b.h-1); ctx.setLineDash([]);
+    b.lines.forEach((l,i)=>type(l,x+PAD,b.y+PAD+13+i*21,BODY));
+    b.subs.forEach((l,i)=>type(l,x+PAD+24,b.y+PAD+13+b.lines.length*21+4+i*19,SMALL,"#3d2c1e"));
+  };
+  mine.forEach(b=>drawItem(b,LX,true)); real.forEach(b=>drawItem(b,RX,false));
+  // red-ink arrows
+  ctx.strokeStyle="#a3271a"; ctx.fillStyle="#a3271a"; ctx.lineWidth=2;
+  R.links.forEach(l=>{
+    const a=mine.find(b=>b.id===l.from), b=real.find(r=>r.id===l.to); if(!a||!b) return;
+    const x1=LX+CW, y1=a.y+a.h/2, x2=RX-3, y2=b.y+Math.min(b.h/2,22), dx=GUT*.55;
+    ctx.globalAlpha=.85; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.bezierCurveTo(x1+dx,y1+(rand()-.5)*6,x2-dx,y2,x2-8,y2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-11,y2-6); ctx.lineTo(x2-11,y2+6); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(x1,y1,3.5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  });
+  center("Red arrows connect your questions to similar questions in the original protocol.",H-92,`13px ${TW}`,"#5a3e28");
+  center("Score = 80% protocol coverage + 20% interview craft",H-72,`13px ${TW}`,"#5a3e28");
+  return cv;
+}
+$("saveImgBtn").onclick=async()=>{
+  $("saveImgBtn").disabled=true; $("saveHint").textContent="Typing up your report…";
+  const wait=typewriterSound();
+  try{
+    const [cv]=await Promise.all([renderReportPNG(), new Promise(r=>setTimeout(r,Math.min(Math.max(wait,0),2600)))]);
+    const url=cv.toDataURL("image/png");
+    const d=new Date(), stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const fname=`case-report-${slug(current.rawName)}-${stamp}.png`;
+    // try a direct download; some platforms (e.g. inside Teams or Brightspace frames) block it, so always show the image too
+    try{ const a=document.createElement("a"); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); }catch(e){}
+    $("rptImg").src=url; $("rptName").textContent=fname; $("rptModal").classList.add("show");
+    $("saveHint").textContent="";
+  }catch(e){ $("saveHint").textContent="Sorry, the image couldn’t be created in this browser. Try opening the file in Chrome or Edge."; }
+  $("saveImgBtn").disabled=false;
+};
+
+/* ============ magnifying lens + enlarge ============ */
+const lens=$("lens"), Z=2.4;
+function wireImages(){
+  const fine=matchMedia("(hover:hover) and (pointer:fine)").matches;
+  document.querySelectorAll("figure.ev img").forEach(img=>{
+    img.onclick=()=>{$("modalImg").src=img.src; $("modalImg").alt=img.alt; $("modal").classList.add("show"); lens.style.display="none";};
+    if(!fine) return;
+    img.onmouseenter=()=>{lens.style.display="block"; lens.style.backgroundImage=`url("${img.src}")`;};
+    img.onmouseleave=()=>{lens.style.display="none";};
+    img.onmousemove=e=>{
+      const r=img.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top, L=190;
+      lens.style.left=(e.clientX-L/2)+"px"; lens.style.top=(e.clientY-L/2)+"px";
+      lens.style.backgroundSize=(r.width*Z)+"px "+(r.height*Z)+"px";
+      lens.style.backgroundPosition=(-(x*Z-L/2+9))+"px "+(-(y*Z-L/2+9))+"px";
+    };
+  });
+}
+$("rptClose").onclick=()=>$("rptModal").classList.remove("show");
+$("modalClose").onclick=$("modal").onclick=e=>{if(e.target.id!=="modalImg") $("modal").classList.remove("show");};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){ $("modal").classList.remove("show"); $("rptModal").classList.remove("show"); }});
+
+$("actTitle").textContent=CFG.title||"The Case of the Missing Interview Questions";
+$("actSub").textContent=CFG.subtitle||"";
+if(!CASES.length) $("cases").innerHTML='<p style="color:#e8d6b3;font-style:italic">No case files yet.</p>';
+window.addEventListener("hashchange",route);
+route();
+</script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interview Detective · Activity Builder</title>
+<meta name="description" content="Build a Sherlock-themed research methods activity: students read a study's clues, reconstruct its interview protocol, and get an automatic score.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Special+Elite&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2b1b10;--ink2:#4a3020;--brown:#6b4226;--rust:#8c3b1f;--red:#9b2d20;--tan:#d9c29a;--tan2:#e8d6b3;--paper:#f3e7cc;--line:#b9976a;--muted:#7a5d42;--ok:#4f6b2c}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"EB Garamond",Georgia,serif;color:var(--ink);font-size:18px;line-height:1.5;min-height:100vh;
+  background:#3a2414;background-image:radial-gradient(ellipse at 20% 0%,rgba(140,90,50,.55),transparent 60%),radial-gradient(ellipse at 90% 100%,rgba(20,10,4,.7),transparent 60%),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 2px,transparent 2px 9px),linear-gradient(#4a2e1a,#2e1b0f);background-attachment:fixed}
+h1,h2,h3{font-family:"IM Fell English",Georgia,serif;font-weight:400;margin:0}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.wrap{max-width:1240px;margin:0 auto;padding:26px 22px 120px}
+header.top{display:flex;align-items:center;gap:18px;color:var(--tan2);margin-bottom:22px}
+header.top h1{font-size:clamp(28px,4vw,44px);line-height:1.05;color:#f1dfb8}
+header.top p{margin:6px 0 0;color:var(--tan);font-style:italic}
+.paper{background:var(--paper);background-image:radial-gradient(ellipse at 10% 10%,rgba(255,255,255,.5),transparent 50%),radial-gradient(ellipse at 95% 90%,rgba(150,100,40,.18),transparent 55%);border-radius:3px;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 60px rgba(120,80,30,.18)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-bottom:22px;padding:0}
+.steps div{padding:16px 20px;border-right:1px dashed var(--line)}
+.steps div:last-child{border-right:none}
+.steps b{font-family:"Special Elite",monospace;font-weight:400;color:var(--rust);font-size:14px;letter-spacing:.06em;display:block}
+.steps span{font-size:16.5px}
+.steps strong{font-weight:600}
+@media (max-width:760px){.steps{grid-template-columns:1fr}.steps div{border-right:none;border-bottom:1px dashed var(--line)}}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.side{padding:16px;position:sticky;top:14px}
+.side h3{font-family:"IM Fell English SC",serif;font-size:18px;color:var(--brown);margin:4px 0 8px;letter-spacing:.04em}
+.navitem{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:rgba(255,255,255,.35);border:1px solid var(--line);border-radius:3px;padding:9px 10px;margin-bottom:7px;color:var(--ink)}
+.navitem:hover{background:#fff6e0}
+.navitem.sel{background:#e2c48a;border-color:var(--brown);box-shadow:inset 4px 0 0 var(--brown)}
+.navitem .nm{flex:1;line-height:1.2}
+.navitem .nm small{display:block;font-family:"Special Elite",monospace;font-size:12px;color:var(--muted)}
+.navitem .warn{color:var(--red);font-size:14px}
+.btn{background:var(--paper);color:var(--ink);border:1px solid var(--brown);border-radius:3px;padding:8px 14px;box-shadow:0 2px 0 var(--brown);transition:transform .08s}
+.btn:hover{background:#fff6e0}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.dark{background:var(--brown);color:#f6e9cc;border-color:#3d2414;box-shadow:0 3px 0 #3d2414}
+.btn.dark:hover{background:#7a4c2c}
+.btn.small{padding:4px 10px;font-size:15px}
+.btn.ghost{background:transparent;box-shadow:none;border-style:dashed}
+.btn.danger{color:var(--red);border-color:var(--red);box-shadow:0 2px 0 var(--red)}
+.btn.full{width:100%}
+.ed{padding:24px 28px 30px}
+.ed h2{font-size:30px;margin-bottom:4px}
+.ed .lead{color:var(--ink2);margin:0 0 18px;font-size:17px}
+fieldset{border:1px solid var(--line);border-radius:3px;margin:0 0 20px;padding:14px 18px 16px;background:rgba(255,255,255,.22)}
+legend{font-family:"IM Fell English SC",serif;font-size:20px;color:var(--brown);padding:0 8px;letter-spacing:.03em}
+legend .tag{font-family:"Special Elite",monospace;font-size:12px;color:#f6e9cc;background:var(--rust);padding:2px 7px;border-radius:2px;margin-left:6px;vertical-align:middle;letter-spacing:.04em}
+legend .tag.key{background:var(--ok)}
+.f{margin-bottom:12px}
+.f label{display:block;font-weight:600;font-size:16.5px;margin-bottom:3px}
+.f .help{font-size:15px;color:var(--muted);font-style:italic;margin:0 0 5px}
+.f input[type=text],.f textarea{width:100%;border:1px solid var(--line);border-radius:2px;padding:8px 10px;background:#fbf4e3;color:var(--ink);font-size:16.5px}
+.f textarea{min-height:110px;resize:vertical;line-height:1.45}
+.f textarea.mono{font-family:"Special Elite",monospace;font-size:14.5px;line-height:1.55;min-height:200px}
+.f input:focus,.f textarea:focus{outline:2px solid var(--brown);outline-offset:1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.row2{grid-template-columns:1fr}}
+.card{border:1px dashed var(--line);border-radius:3px;padding:12px 14px;margin-bottom:12px;background:rgba(255,250,235,.5)}
+.cardhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cardhead b{flex:1;font-family:"Special Elite",monospace;font-weight:400;color:var(--rust);font-size:14px;letter-spacing:.05em}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:16px;margin:4px 0 10px}
+.chk input{margin-top:5px}
+.parsed{font-family:"Special Elite",monospace;font-size:13px;color:var(--ok);margin-top:4px}
+.parsed.bad{color:var(--red)}
+.imgs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+.imgcard{width:170px;background:#fff;border:1px solid var(--line);padding:6px;font-size:14px}
+.imgcard img{display:block;width:100%;height:100px;object-fit:contain;background:#f6f1e6}
+.imgcard input{width:100%;margin:5px 0;font-size:13.5px;padding:4px 6px;border:1px solid var(--line)}
+.imgcard button{font-size:13px;background:none;border:none;color:var(--red);padding:0}
+.drop{display:inline-flex;gap:8px;align-items:center}
+.howto summary{cursor:pointer;font-family:"IM Fell English SC",serif;font-size:18px;color:var(--brown)}
+.howto{font-size:16.5px}
+.howto ul{margin:6px 0;padding-left:22px}
+.note{font-size:15px;color:var(--muted);font-style:italic}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:linear-gradient(#3b2414,#2a180c);border-top:2px solid #6b4226;box-shadow:0 -6px 20px rgba(0,0,0,.4)}
+.bar .in{max-width:1240px;margin:0 auto;padding:10px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bar .status{color:var(--tan);font-size:14.5px;font-style:italic;margin-right:auto}
+.bar .btn{white-space:nowrap}
+.modal{position:fixed;inset:0;background:rgba(20,10,4,.88);display:none;z-index:40;padding:14px}
+.modal.show{display:flex;flex-direction:column}
+.modal .mhead{display:flex;align-items:center;gap:12px;color:var(--tan2);padding:0 4px 10px}
+.modal .mhead h3{flex:1;font-size:22px}
+.modal iframe{flex:1;width:100%;border:none;border-radius:3px;background:#3a2414}
+.dlg{max-width:620px;margin:auto;padding:22px 24px}
+.dlg h3{font-size:26px;margin-bottom:8px}
+.dlg ul{padding-left:22px}
+.dlg .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.empty{text-align:center;padding:40px 20px}
+.hidden{display:none!important}
+footer{color:var(--tan);text-align:center;font-size:14.5px;margin-top:30px;opacity:.8;font-style:italic}
+footer a{color:var(--tan2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <svg width="72" height="72" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><radialGradient id="glass" cx="38%" cy="35%" r="70%"><stop offset="0" stop-color="#fff8e6" stop-opacity=".9"/><stop offset=".6" stop-color="#d9c29a" stop-opacity=".45"/><stop offset="1" stop-color="#8c6a42" stop-opacity=".5"/></radialGradient>
+      <linearGradient id="brass" x1="0" x2="1"><stop offset="0" stop-color="#7a5326"/><stop offset=".5" stop-color="#d4a35a"/><stop offset="1" stop-color="#6b4220"/></linearGradient></defs>
+      <rect x="58" y="62" width="14" height="40" rx="5" transform="rotate(-45 65 82)" fill="#3b2210" stroke="#1c0f06" stroke-width="2"/>
+      <circle cx="40" cy="40" r="30" fill="url(#glass)" stroke="url(#brass)" stroke-width="7"/>
+      <path d="M24 32 A18 18 0 0 1 36 22" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".8"/>
+    </svg>
+    <div>
+      <h1>Interview Detective</h1>
+      <p>An activity builder for research methods classes: students read a study&rsquo;s clues, reconstruct its interview protocol, and get an automatic score.</p>
+    </div>
+  </header>
+
+  <div class="paper steps">
+    <div><b>STEP 1</b><span>Add one or more <strong>case files</strong>: a study&rsquo;s abstract, research questions and findings as clues, plus its real interview protocol as the answer key.</span></div>
+    <div><b>STEP 2</b><span><strong>Preview</strong> the activity exactly as students will see it, and try writing a few questions yourself.</span></div>
+    <div><b>STEP 3</b><span><strong>Download</strong> the student activity: one HTML file to post in your learning platform or send to students.</span></div>
+  </div>
+
+  <div class="layout">
+    <aside class="paper side">
+      <h3>Activity</h3>
+      <button class="navitem" data-nav="settings"><span class="nm">Title &amp; introduction</span></button>
+      <h3 style="margin-top:14px">Case files</h3>
+      <div id="caseNav"></div>
+      <button class="btn full" id="addCase">+ New case file</button>
+      <button class="btn ghost full" id="addExample" style="margin-top:8px">+ Add a fictional example case</button>
+      <details class="howto" style="margin-top:16px">
+        <summary>How it works</summary>
+        <ul>
+          <li>Students choose a case, study the clues, and write the interview questions they think the researchers asked.</li>
+          <li>&ldquo;Ready to Compare&rdquo; reveals your answer key beside their questions, with arrows linking similar ones.</li>
+          <li>The score (0&ndash;100) is automatic: 80% how much of the real protocol their questions cover (matching distinctive words and common synonyms), 20% whether their questions are open-ended.</li>
+          <li>Students can save a typewritten &ldquo;case report&rdquo; image to submit.</li>
+          <li>Your work saves automatically in this browser. To edit a finished activity later, use <b>Open an activity</b> and choose its downloaded HTML file.</li>
+        </ul>
+        <p class="note">Everything you enter is built into the file you download, including abstracts and images, so use material you have the right to share with your students (for example, open-access articles).</p>
+      </details>
+    </aside>
+
+    <main class="paper ed" id="editor"></main>
+  </div>
+
+  <footer>Interview Detective &middot; a <a href="https://collegetowns.org">College Towns</a> project</footer>
+</div>
+
+<div class="bar"><div class="in">
+  <span class="status" id="status">Your work is saved in this browser.</span>
+  <button class="btn" id="openBtn">Open an activity&hellip;</button>
+  <input type="file" id="openFile" accept=".html,.htm,text/html" class="hidden">
+  <button class="btn" id="previewBtn">Preview as a student</button>
+  <button class="btn dark" id="downloadBtn">Download student activity (.html)</button>
+</div></div>
+
+<div class="modal" id="previewModal" role="dialog" aria-modal="true" aria-label="Student preview">
+  <div class="mhead"><h3>Student preview <span class="note" style="color:var(--tan)">(answers typed here are only a test)</span></h3><button class="btn" id="closePreview">Close preview &times;</button></div>
+  <iframe id="previewFrame" title="Student activity preview"></iframe>
+</div>
+
+<div class="modal" id="dlgModal" role="dialog" aria-modal="true"><div class="paper dlg" id="dlg"></div></div>
+
+<script>
+/*__TEMPLATE__*/
+const $=id=>document.getElementById(id);
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- state ---------- */
+const blankCase=()=>({key:uid(),name:"",tagline:"",title:"",cite:"",abstract:"",rqIntro:"",rqsText:"",clues:[],protoTitle:"Interview Protocol",sections:[{key:uid(),h:"",warm:false,brief:"",text:""}]});
+const blankProject=()=>({id:uid(),title:"The Case of the Missing Interview Questions",subtitle:"The interview protocols have vanished. Read the clues, then reconstruct what the researchers asked.",cases:[]});
+let P=blankProject(), sel="settings";
+
+const EXAMPLE={name:"First-Generation Students",tagline:"Twelve first-year students. One question: do they belong here?",
+  title:"“Am I supposed to be here?” Belonging among first-generation college students (fictional example)",
+  cite:"Example, A., & Sample, B. (2026). A fictional study created for demonstration purposes. Not a real publication.",
+  abstract:"This qualitative study explores how first-generation college students experience a sense of belonging during their first year at a mid-sized public university. Twelve first-year students whose parents did not complete a four-year degree participated in two semi-structured interviews, one in the fall and one in the spring. Students described belonging as something earned through small moments of recognition from faculty and peers rather than something granted at orientation. Many reported a “double life” between home and campus, balancing family responsibilities and paid work with academic expectations. Campus employment, peer mentoring and approachable instructors emerged as the strongest supports, while hidden curriculum (unwritten rules about office hours, email etiquette and course registration) was the most common barrier. Implications for first-year programming and faculty development are discussed.",
+  rqIntro:"Two research questions guided the study:",
+  rqsText:"1. How do first-generation college students describe their sense of belonging during their first year of college?\n2. What campus experiences, people and resources support or hinder that sense of belonging?",
+  clues:[{key:uid(),title:"Findings: Themes",subtitle:"From the researchers’ notes",text:"Theme 1. Belonging is earned, not granted: being remembered by name; a professor’s comment on a paper.\n\nTheme 2. Living a double life: family responsibilities, paid work, explaining college to relatives.\n\nTheme 3. The hidden curriculum: not knowing what office hours are for; fear of asking “obvious” questions.\n\nTheme 4. Anchors on campus: campus jobs, peer mentors, one approachable instructor.",images:[]}],
+  protoTitle:"Student Interview Protocol (Fall)",
+  sections:[
+    {key:uid(),h:"Getting to know you",warm:true,brief:"",text:"Tell me a little about yourself and how you decided to come to this university.\nWhat did your family think about you going to college?\nWhat were you expecting college to be like before you arrived?"},
+    {key:uid(),h:"Main questions",warm:false,brief:"",text:"What does it mean to you to “belong” at a college?\nDescribe a moment this year when you felt like you belonged here.\nDescribe a moment when you felt like you did not belong.\nWho on campus has helped you feel more at home? How did they help?\nWhat parts of college have been confusing or unwritten that no one explained to you?\nHow do you balance your responsibilities at home or at work with your schoolwork?\n  How has that balance affected your time on campus?\nWhat campus resources or programs have you used, and how helpful were they?\nWhat could the university do to help students like you feel that they belong?\nIs there anything else about your first year you would like to share?"}
+  ]};
+
+/* ---------- persistence (IndexedDB, falls back to memory) ---------- */
+let db=null;
+function idb(){return new Promise(res=>{try{const r=indexedDB.open("interview-detective",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>{db=r.result;res(db);}; r.onerror=()=>res(null);}catch(e){res(null);}});}
+function idbGet(k){return new Promise(res=>{if(!db) return res(null); try{const r=db.transaction("kv").objectStore("kv").get(k); r.onsuccess=()=>res(r.result||null); r.onerror=()=>res(null);}catch(e){res(null);}});}
+function idbSet(k,v){return new Promise(res=>{if(!db) return res(false); try{const t=db.transaction("kv","readwrite"); t.objectStore("kv").put(v,k); t.oncomplete=()=>res(true); t.onerror=()=>res(false);}catch(e){res(false);}});}
+let saveT=null;
+function touch(){ $("status").textContent="Saving…"; clearTimeout(saveT); saveT=setTimeout(async()=>{ const ok=await idbSet("project",JSON.parse(JSON.stringify(P))); $("status").textContent=ok?"All changes saved in this browser.":"Couldn’t save in this browser. Download your activity to keep it."; },400); }
+
+/* ---------- parsing ---------- */
+function parseProtocol(text){
+  const qs=[];
+  String(text||"").split(/\r?\n/).forEach(line=>{
+    if(!line.trim()) return;
+    const isSub=/^(\s{2,}|\t)/.test(line)||/^\s*[-–•*]\s+/.test(line)||/^\s*\(?([a-h]|i{1,3}|iv|vi{0,3}|ix|x)[\.\)]\s+/.test(line);
+    const clean=line.trim().replace(/^[-–•*]\s+/,"").replace(/^\(?(\d{1,2}|[a-h]|i{1,3}|iv|v|vi{0,3}|ix|x)[\.\):]\s+/i,"").replace(/^Q\d+[\.\):]?\s+/i,"").trim();
+    if(!clean) return;
+    if(isSub&&qs.length) qs[qs.length-1].subs.push(clean); else qs.push({t:clean,subs:[]});
+  });
+  return qs;
+}
+const lines=t=>String(t||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+function caseIssues(c){
+  const out=[];
+  if(!c.name.trim()) out.push("needs a topic name");
+  const n=c.sections.reduce((a,s)=>a+parseProtocol(s.text).length,0);
+  if(n<2) out.push("needs at least 2 interview protocol questions (the answer key)");
+  if(!c.abstract.trim()&&!lines(c.rqsText).length&&!c.clues.length) out.push("has no clues for students yet");
+  return out;
+}
+
+/* ---------- export ---------- */
+function toConfig(){
+  return {id:P.id,title:P.title.trim()||"The Case of the Missing Interview Questions",subtitle:P.subtitle.trim(),
+    cases:P.cases.filter(c=>caseIssues(c).filter(x=>!x.startsWith("has no clues")).length===0).map(c=>({
+      name:c.name.trim(),tagline:c.tagline.trim(),title:c.title.trim(),cite:c.cite.trim(),abstract:c.abstract,rqIntro:c.rqIntro.trim(),rqs:lines(c.rqsText),
+      clues:c.clues.map(k=>({title:k.title.trim(),subtitle:(k.subtitle||"").trim(),text:k.text,images:k.images.map(i=>({src:i.src,cap:i.cap}))})),
+      protoTitle:c.protoTitle.trim()||"Interview Protocol",
+      sections:c.sections.filter(s=>parseProtocol(s.text).length).map(s=>({h:s.h.trim(),warm:!!s.warm,brief:s.brief.trim(),qs:parseProtocol(s.text)}))
+    }))};
+}
+function templateHTML(){ const bin=atob(TEMPLATE_B64); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return new TextDecoder().decode(bytes); }
+function buildStudentHTML(){
+  const cfg=toConfig();
+  const json=JSON.stringify(cfg).replace(/</g,"\\u003c").split(String.fromCharCode(0x2028)).join("\\u2028").split(String.fromCharCode(0x2029)).join("\\u2029");
+  return templateHTML().replace("/*__CONFIG__*/null",()=>json);
+}
+function fromConfig(cfg){
+  const roman=["i","ii","iii","iv","v","vi","vii","viii","ix","x"];
+  return {id:cfg.id||uid(),title:cfg.title||"",subtitle:cfg.subtitle||"",cases:(cfg.cases||[]).map(k=>({key:uid(),name:k.name||"",tagline:k.tagline||"",title:k.title||"",cite:k.cite||"",abstract:k.abstract||"",rqIntro:k.rqIntro||"",rqsText:(k.rqs||[]).join("\n"),
+    clues:(k.clues||[]).map(cl=>({key:uid(),title:cl.title||"",subtitle:cl.subtitle||"",text:cl.text||"",images:(cl.images||[]).map(i=>({src:i.src,cap:i.cap||""}))})),
+    protoTitle:k.protoTitle||"Interview Protocol",
+    sections:(k.sections||[]).map(s=>({key:uid(),h:s.h||"",warm:!!s.warm,brief:s.brief||"",
+      text:(s.qs||[]).map(q=>[q.t].concat((q.subs||[]).map((x,j)=>"  "+(q.subs.length>8?roman[j]:"abcdefgh"[j])+". "+x)).join("\n")).join("\n")}))}))};
+}
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"activity";
+
+/* ---------- rendering ---------- */
+function renderNav(){
+  $("caseNav").innerHTML=P.cases.length?P.cases.map((c,i)=>{const iss=caseIssues(c);
+    return `<button class="navitem ${sel===c.key?"sel":""}" data-nav="${c.key}"><span class="nm">${esc(c.name||"Untitled case")}<small>CASE FILE NO. ${i+1}</small></span>${iss.length?`<span class="warn" title="${esc(iss.join("; "))}">&#9888;</span>`:""}</button>`;}).join(""):`<p class="note" style="margin:0 0 10px">No case files yet.</p>`;
+  document.querySelectorAll("[data-nav]").forEach(b=>{b.classList.toggle("sel",b.dataset.nav===sel); b.onclick=()=>{sel=b.dataset.nav; render(); window.scrollTo({top:0,behavior:"smooth"});};});
+}
+function field(label,help,html){return `<div class="f"><label>${label}</label>${help?`<p class="help">${help}</p>`:""}${html}</div>`;}
+function inp(path,val,ph=""){return `<input type="text" data-path="${path}" value="${esc(val)}" placeholder="${esc(ph)}">`;}
+function ta(path,val,ph="",cls=""){return `<textarea data-path="${path}" class="${cls}" placeholder="${esc(ph)}">${esc(val)}</textarea>`;}
+
+function render(){
+  renderNav();
+  const E=$("editor");
+  if(sel==="settings"){
+    E.innerHTML=`<h2>Title &amp; introduction</h2><p class="lead">What students see at the top of the activity.</p>
+      <fieldset><legend>Activity</legend>
+      ${field("Activity title","",inp("title",P.title))}
+      ${field("Subtitle","One or two sentences under the title.",ta("subtitle",P.subtitle))}
+      </fieldset>
+      ${P.cases.length?"":`<div class="empty"><p>Start by adding a case file on the left, or add the fictional example to see how it works.</p><button class="btn dark" onclick="document.getElementById('addExample').click()">Add the fictional example</button></div>`}`;
+  } else {
+    const ci=P.cases.findIndex(c=>c.key===sel); const c=P.cases[ci];
+    if(!c){ sel="settings"; return render(); }
+    const iss=caseIssues(c);
+    E.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2>Case file no. ${ci+1}</h2><p class="lead">${iss.length?`<span style="color:var(--red)">&#9888; This case ${esc(iss.join(" and "))}.</span>`:"This case is ready."}</p></div>
+      <div style="display:flex;gap:6px"><button class="btn small" data-act="up" ${ci===0?"disabled":""} title="Move up">&uarr;</button><button class="btn small" data-act="down" ${ci===P.cases.length-1?"disabled":""} title="Move down">&darr;</button><button class="btn small danger" data-act="delcase">Delete case</button></div></div>
+      <fieldset><legend>The folder <span class="tag">STUDENTS SEE</span></legend>
+        <div class="row2">${field("Topic name *","Shown on the case folder, e.g. “Special Education”.",inp("c.name",c.name,"Topic"))}${field("Teaser line","One short, intriguing sentence for the folder.",inp("c.tagline",c.tagline,"Nine teachers. One question…"))}</div>
+        ${field("Article title","",inp("c.title",c.title))}
+        ${field("Citation","",inp("c.cite",c.cite,"Author, A. (Year). Title. Journal, vol(issue), pages."))}
+      </fieldset>
+      <fieldset><legend>Clue: the abstract <span class="tag">STUDENTS SEE</span></legend>
+        ${field("Abstract","Paste the abstract. Leave a blank line between paragraphs.",ta("c.abstract",c.abstract))}
+      </fieldset>
+      <fieldset><legend>Clue: research questions <span class="tag">STUDENTS SEE</span></legend>
+        ${field("Introduction (optional)","Context such as who was interviewed and how.",ta("c.rqIntro",c.rqIntro,"e.g. The researchers interviewed nine special education teachers via Zoom…"))}
+        ${field("Research questions","One per line.",ta("c.rqsText",c.rqsText,"1. How do…?\n2. What…?"))}
+      </fieldset>
+      <fieldset><legend>More clues <span class="tag">STUDENTS SEE</span></legend>
+        <p class="help note" style="margin-top:0">Findings, coding tables, figures, methods notes, a sampling description&hellip; Add text, images, or both.</p>
+        ${c.clues.map((k,ki)=>`<div class="card"><div class="cardhead"><b>CLUE ${String.fromCharCode(67+ki)}</b><button class="btn small danger" data-act="delclue" data-i="${ki}">Remove</button></div>
+          <div class="row2">${field("Clue title","",inp(`clue.${ki}.title`,k.title,"e.g. Findings: Coding Table"))}${field("Subtitle (optional)","",inp(`clue.${ki}.subtitle`,k.subtitle||"","e.g. Recovered from the researchers’ desk"))}</div>
+          ${field("Text (optional)","",ta(`clue.${ki}.text`,k.text))}
+          <div class="f"><label>Images (optional)</label><p class="help">PNG or JPG screenshots of tables or figures. Students can magnify them. Large images are resized automatically.</p>
+            <div class="imgs">${k.images.map((im,ii)=>`<div class="imgcard"><img src="${im.src}" alt=""><input type="text" data-path="img.${ki}.${ii}.cap" value="${esc(im.cap)}" placeholder="Caption"><button data-act="delimg" data-i="${ki}" data-j="${ii}">Remove image</button></div>`).join("")}</div>
+            <label class="btn small drop">+ Add images<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple class="hidden" data-act="addimg" data-i="${ki}"></label>
+          </div></div>`).join("")}
+        <button class="btn small" data-act="addclue">+ Add a clue</button>
+      </fieldset>
+      <fieldset><legend>Answer key: the interview protocol <span class="tag key">HIDDEN UNTIL STUDENTS COMPARE</span></legend>
+        ${field("Protocol title","e.g. “Appendix A. Interview Protocol”.",inp("c.protoTitle",c.protoTitle))}
+        <p class="help note">Type or paste the questions, <b>one per line</b>. Numbers are removed automatically. To add a <b>sub-question</b>, indent it or start it with a dash or a letter, e.g. <span style="font-family:'Special Elite',monospace;font-style:normal">&nbsp;&nbsp;a. What factors…</span>. If the protocol has parts (e.g. background questions, then main questions), add a section for each; students get a separate box per section.</p>
+        ${c.sections.map((s,si)=>{const pq=parseProtocol(s.text); const subs=pq.reduce((a,q)=>a+q.subs.length,0);
+          return `<div class="card"><div class="cardhead"><b>SECTION ${si+1}</b>${c.sections.length>1?`<button class="btn small danger" data-act="delsec" data-i="${si}">Remove section</button>`:""}</div>
+          ${c.sections.length>1||s.h?field("Section name","Students see this as a heading.",inp(`sec.${si}.h`,s.h,"e.g. Personal information")):""}
+          <label class="chk"><input type="checkbox" data-path="sec.${si}.warm" ${s.warm?"checked":""}><span>Warm-up / background section <span class="note">(these questions count half in the score)</span></span></label>
+          ${field("Questions","",ta(`sec.${si}.text`,s.text,"What grade level do you teach?\nWhat strategies do you use…?\n  a. In social situations?\n  b. In academic situations?","mono"))}
+          <div class="parsed ${pq.length?"":"bad"}" data-parsed="${si}">${pq.length?`&#10003; ${pq.length} question${pq.length>1?"s":""}${subs?`, ${subs} sub-question${subs>1?"s":""}`:""} detected`:"No questions yet"}</div>
+          ${field("Briefing (optional)","Anything participants were told before these questions. Revealed with the answer key.",ta(`sec.${si}.brief`,s.brief))}
+          </div>`;}).join("")}
+        <button class="btn small" data-act="addsec">+ Add a section</button>
+      </fieldset>`;
+  }
+  wire();
+}
+function setPath(path,val){
+  const c=P.cases.find(x=>x.key===sel); const p=path.split(".");
+  if(p[0]==="title"||p[0]==="subtitle") P[p[0]]=val;
+  else if(p[0]==="c") c[p[1]]=val;
+  else if(p[0]==="clue") c.clues[+p[1]][p[2]]=val;
+  else if(p[0]==="sec") c.sections[+p[1]][p[2]]=val;
+  else if(p[0]==="img") c.clues[+p[1]].images[+p[2]].cap=val;
+  touch();
+}
+function wire(){
+  document.querySelectorAll("#editor [data-path]").forEach(el=>{
+    const ev=el.type==="checkbox"?"change":"input";
+    el.addEventListener(ev,()=>{
+      setPath(el.dataset.path,el.type==="checkbox"?el.checked:el.value);
+      if(/^sec\.\d+\.text$/.test(el.dataset.path)){ const si=+el.dataset.path.split(".")[1]; const pq=parseProtocol(el.value); const subs=pq.reduce((a,q)=>a+q.subs.length,0); const d=document.querySelector(`[data-parsed="${si}"]`); d.className="parsed "+(pq.length?"":"bad"); d.innerHTML=pq.length?`&#10003; ${pq.length} question${pq.length>1?"s":""}${subs?`, ${subs} sub-question${subs>1?"s":""}`:""} detected`:"No questions yet"; }
+      if(el.dataset.path==="c.name"||/^sec\.\d+\.text$/.test(el.dataset.path)) renderNav();
+    });
+  });
+  const c=P.cases.find(x=>x.key===sel);
+  document.querySelectorAll("#editor [data-act]").forEach(el=>{
+    const a=el.dataset.act, i=+el.dataset.i, j=+el.dataset.j;
+    if(a==="addimg"){ el.onchange=async()=>{ const files=[...el.files]; $("status").textContent="Adding images…"; for(const f of files){ try{ c.clues[i].images.push({src:await shrink(f),cap:f.name.replace(/\.[^.]+$/,"")}); }catch(e){} } touch(); render(); }; return; }
+    el.onclick=()=>{
+      const ci=P.cases.indexOf(c);
+      if(a==="up"&&ci>0){ [P.cases[ci-1],P.cases[ci]]=[P.cases[ci],P.cases[ci-1]]; }
+      else if(a==="down"&&ci<P.cases.length-1){ [P.cases[ci+1],P.cases[ci]]=[P.cases[ci],P.cases[ci+1]]; }
+      else if(a==="delcase"){ if(!confirm(`Delete the case “${c.name||"Untitled"}”? This can’t be undone.`)) return; P.cases.splice(ci,1); sel=P.cases[Math.max(0,ci-1)]?.key||"settings"; }
+      else if(a==="addclue") c.clues.push({key:uid(),title:"",subtitle:"",text:"",images:[]});
+      else if(a==="delclue"){ if(!confirm("Remove this clue?")) return; c.clues.splice(i,1); }
+      else if(a==="delimg") c.clues[i].images.splice(j,1);
+      else if(a==="addsec") c.sections.push({key:uid(),h:"",warm:false,brief:"",text:""});
+      else if(a==="delsec"){ if(!confirm("Remove this section and its questions?")) return; c.sections.splice(i,1); }
+      touch(); render();
+    };
+  });
+}
+function shrink(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>{const im=new Image(); im.onload=()=>{const M=1600, s=Math.min(1,M/im.width); const cv=document.createElement("canvas"); cv.width=Math.round(im.width*s); cv.height=Math.round(im.height*s); const x=cv.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,cv.width,cv.height); x.drawImage(im,0,0,cv.width,cv.height); res(cv.toDataURL("image/jpeg",.85));}; im.onerror=rej; im.src=r.result;}; r.onerror=rej; r.readAsDataURL(file);});}
+
+/* ---------- actions ---------- */
+$("addCase").onclick=()=>{ const c=blankCase(); P.cases.push(c); sel=c.key; touch(); render(); };
+$("addExample").onclick=()=>{ const c=Object.assign(blankCase(),JSON.parse(JSON.stringify(EXAMPLE))); c.key=uid(); c.clues.forEach(k=>k.key=uid()); c.sections.forEach(s=>s.key=uid()); P.cases.push(c); sel=c.key; touch(); render(); };
+function dialog(html){ $("dlg").innerHTML=html; $("dlgModal").classList.add("show"); }
+function closeDialog(){ $("dlgModal").classList.remove("show"); }
+function readyCases(){ return P.cases.filter(c=>caseIssues(c).filter(x=>!x.startsWith("has no clues")).length===0); }
+function precheck(next){
+  const bad=P.cases.map((c,i)=>({c,i,iss:caseIssues(c)})).filter(x=>x.iss.length);
+  if(!readyCases().length){ dialog(`<h3>Not quite ready</h3><p>Add at least one case file with a topic name and at least two interview protocol questions.</p><div class="acts"><button class="btn dark" onclick="closeDialog()">OK</button></div>`); return; }
+  if(bad.length){ dialog(`<h3>Some cases need attention</h3><ul>${bad.map(x=>`<li><b>Case ${x.i+1}${x.c.name?` (${esc(x.c.name)})`:""}</b> ${esc(x.iss.join(" and "))}.</li>`).join("")}</ul><p class="note">Cases missing a name or answer key will be left out.</p><div class="acts"><button class="btn" onclick="closeDialog()">Go back and fix</button><button class="btn dark" id="goAnyway">Continue anyway</button></div>`); $("goAnyway").onclick=()=>{closeDialog(); next();}; return; }
+  next();
+}
+$("previewBtn").onclick=()=>precheck(()=>{ const f=$("previewFrame"); f.srcdoc=buildStudentHTML().replace('const CFG=CONFIG||','const CFG=CONFIG&&Object.assign(CONFIG,{id:CONFIG.id+"-preview"})||'); $("previewModal").classList.add("show"); });
+$("closePreview").onclick=()=>{ $("previewModal").classList.remove("show"); $("previewFrame").srcdoc=""; };
+$("downloadBtn").onclick=()=>precheck(()=>{
+  const html=buildStudentHTML(); const name=slug(P.title)+".html";
+  const url=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+  const a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000);
+  const kb=Math.round(html.length/1024);
+  dialog(`<h3>Your activity is downloaded</h3><p>Look for <b>${esc(name)}</b> (${kb>1024?(kb/1024).toFixed(1)+" MB":kb+" KB"}) in your downloads.</p><ul><li><b>Learning platform</b> (Brightspace, Canvas, Moodle&hellip;): upload it as a file in your course content. Students click it to open it in the browser.</li><li><b>Teams or email</b>: share the file; students download it and open it in Chrome, Edge, Safari or Firefox.</li><li>To edit it later, come back here and choose <b>Open an activity</b>.</li></ul><div class="acts"><button class="btn dark" onclick="closeDialog()">Done</button></div>`);
+});
+$("openBtn").onclick=()=>$("openFile").click();
+$("openFile").onchange=async()=>{
+  const f=$("openFile").files[0]; $("openFile").value=""; if(!f) return;
+  const txt=await f.text(); const m=txt.match(/const CONFIG=(\{[\s\S]*?\});\nconst CFG=/);
+  if(!m){ dialog(`<h3>That file can’t be opened here</h3><p>Choose an activity file that was downloaded from this builder.</p><div class="acts"><button class="btn dark" onclick="closeDialog()">OK</button></div>`); return; }
+  const go=()=>{ try{ P=fromConfig(JSON.parse(m[1])); sel=P.cases[0]?.key||"settings"; touch(); render(); closeDialog(); }catch(e){ dialog(`<h3>Sorry</h3><p>That file seems damaged.</p><div class="acts"><button class="btn dark" onclick="closeDialog()">OK</button></div>`); } };
+  if(P.cases.length){ dialog(`<h3>Replace the current activity?</h3><p>Opening <b>${esc(f.name)}</b> replaces what&rsquo;s in the builder now. Download the current one first if you want to keep it.</p><div class="acts"><button class="btn" onclick="closeDialog()">Cancel</button><button class="btn dark" id="doOpen">Open it</button></div>`); $("doOpen").onclick=go; }
+  else go();
+};
+$("dlgModal").onclick=e=>{ if(e.target.id==="dlgModal") closeDialog(); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDialog(); if($("previewModal").classList.contains("show")) $("closePreview").click(); } });
+
+(async()=>{ await idb(); const saved=await idbGet("project"); if(saved&&saved.cases){ P=saved; } sel=P.cases[0]?.key||"settings"; render(); })();
+</script>
+</body>
+</html>
