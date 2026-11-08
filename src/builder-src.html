@@ -64,6 +64,7 @@ legend .tag.key{background:var(--ok)}
 .f .help{font-size:15px;color:var(--muted);font-style:italic;margin:0 0 5px}
 .f input[type=text],.f textarea{width:100%;border:1px solid var(--line);border-radius:2px;padding:8px 10px;background:#fbf4e3;color:var(--ink);font-size:16.5px}
 .f textarea{min-height:110px;resize:vertical;line-height:1.45}
+.f textarea.syn{min-height:320px;font-size:13.5px}
 .f textarea.mono{font-family:"Special Elite",monospace;font-size:14.5px;line-height:1.55;min-height:200px}
 .f input:focus,.f textarea:focus{outline:2px solid var(--brown);outline-offset:1px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -171,6 +172,7 @@ footer a{color:var(--tan2)}
 
 <script>
 /*__TEMPLATE__*/
+const DEFAULT_SYNONYMS=/*__SYNONYMS__*/"";
 const $=id=>document.getElementById(id);
 const uid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -272,7 +274,7 @@ function caseIssues(c){
 
 /* ---------- export ---------- */
 function toConfig(){
-  return {id:P.id,title:P.title.trim()||"The Case of the Missing Interview Questions",subtitle:P.subtitle.trim(),
+  return {id:P.id,title:P.title.trim()||"The Case of the Missing Interview Questions",subtitle:P.subtitle.trim(),synonyms:(P.synonyms!=null?P.synonyms:DEFAULT_SYNONYMS),
     cases:P.cases.filter(c=>caseIssues(c).filter(x=>!x.startsWith("has no clues")).length===0).map(c=>({
       name:c.name.trim(),tagline:c.tagline.trim(),title:c.title.trim(),cite:c.cite.trim(),url:(c.url||"").trim(),license:(c.license||"").trim(),abstract:c.abstract,rqIntro:c.rqIntro.trim(),rqs:lines(c.rqsText),
       clues:c.clues.map(k=>({title:k.title.trim(),subtitle:(k.subtitle||"").trim(),text:k.text,images:k.images.map(i=>({src:i.src,cap:i.cap}))})),
@@ -288,7 +290,7 @@ function buildStudentHTML(){
 }
 function fromConfig(cfg){
   const roman=["i","ii","iii","iv","v","vi","vii","viii","ix","x"];
-  return {id:cfg.id||uid(),title:cfg.title||"",subtitle:cfg.subtitle||"",cases:(cfg.cases||[]).map(k=>({key:uid(),name:k.name||"",tagline:k.tagline||"",title:k.title||"",cite:k.cite||"",url:k.url||"",license:k.license||"",abstract:k.abstract||"",rqIntro:k.rqIntro||"",rqsText:(k.rqs||[]).join("\n"),
+  return {id:cfg.id||uid(),title:cfg.title||"",subtitle:cfg.subtitle||"",synonyms:(cfg.synonyms!=null?cfg.synonyms:undefined),cases:(cfg.cases||[]).map(k=>({key:uid(),name:k.name||"",tagline:k.tagline||"",title:k.title||"",cite:k.cite||"",url:k.url||"",license:k.license||"",abstract:k.abstract||"",rqIntro:k.rqIntro||"",rqsText:(k.rqs||[]).join("\n"),
     clues:(k.clues||[]).map(cl=>({key:uid(),title:cl.title||"",subtitle:cl.subtitle||"",text:cl.text||"",images:(cl.images||[]).map(i=>({src:i.src,cap:i.cap||""}))})),
     protoTitle:k.protoTitle||"Interview Protocol",
     sections:(k.sections||[]).map(s=>({key:uid(),h:s.h||"",warm:!!s.warm,brief:s.brief||"",
@@ -320,6 +322,11 @@ function render(){
       <fieldset><legend>Activity</legend>
       ${field("Activity title","",inp("title",P.title))}
       ${field("Subtitle","One or two sentences under the title.",ta("subtitle",P.subtitle))}
+      </fieldset>
+      <fieldset><legend>Synonym list <span class="tag key">USED FOR SCORING</span></legend>
+        <p class="help note" style="margin-top:0">Words on the same line count as the same word when questions are compared, so a student who writes &ldquo;obstacles&rdquo; matches a protocol question about &ldquo;barriers.&rdquo; One group per line, words separated by commas. Use single words; endings like -s, -ed and -ing are matched automatically. Students can see this list in their score explanation.</p>
+        <div class="f">${ta("synonyms",P.synonyms!=null?P.synonyms:DEFAULT_SYNONYMS,"","mono syn")}</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn small" data-act="resetsyn">Reset to the default list</button><span class="note" id="synCount"></span></div>
       </fieldset>
       ${P.cases.length?"":`<div class="empty"><p>Start by adding a case file on the left, or add one of the starter cases (real open-access studies) to see how it works.</p><button class="btn dark" onclick="document.getElementById('addExample').click()">Browse starter cases</button></div>`}`;
   } else {
@@ -365,11 +372,12 @@ function render(){
         <button class="btn small" data-act="addsec">+ Add a section</button>
       </fieldset>`;
   }
-  wire();
+  wire(); synCount();
 }
+function synCount(){ const n=$("synCount"); if(!n) return; const g=String(P.synonyms!=null?P.synonyms:DEFAULT_SYNONYMS).split(/\n/).filter(l=>l.split(",").filter(x=>x.trim()).length>1).length; n.textContent=g+" synonym groups"; }
 function setPath(path,val){
   const c=P.cases.find(x=>x.key===sel); const p=path.split(".");
-  if(p[0]==="title"||p[0]==="subtitle") P[p[0]]=val;
+  if(p[0]==="title"||p[0]==="subtitle"||p[0]==="synonyms") P[p[0]]=val;
   else if(p[0]==="c") c[p[1]]=val;
   else if(p[0]==="clue") c.clues[+p[1]][p[2]]=val;
   else if(p[0]==="sec") c.sections[+p[1]][p[2]]=val;
@@ -382,12 +390,14 @@ function wire(){
     el.addEventListener(ev,()=>{
       setPath(el.dataset.path,el.type==="checkbox"?el.checked:el.value);
       if(/^sec\.\d+\.text$/.test(el.dataset.path)){ const si=+el.dataset.path.split(".")[1]; const pq=parseProtocol(el.value); const subs=pq.reduce((a,q)=>a+q.subs.length,0); const d=document.querySelector(`[data-parsed="${si}"]`); d.className="parsed "+(pq.length?"":"bad"); d.innerHTML=pq.length?`&#10003; ${pq.length} question${pq.length>1?"s":""}${subs?`, ${subs} sub-question${subs>1?"s":""}`:""} detected`:"No questions yet"; }
+      if(el.dataset.path==="synonyms") synCount();
       if(el.dataset.path==="c.name"||/^sec\.\d+\.text$/.test(el.dataset.path)) renderNav();
     });
   });
   const c=P.cases.find(x=>x.key===sel);
   document.querySelectorAll("#editor [data-act]").forEach(el=>{
     const a=el.dataset.act, i=+el.dataset.i, j=+el.dataset.j;
+    if(a==="resetsyn"){ el.onclick=()=>{ if(!confirm("Replace your synonym list with the default list?")) return; P.synonyms=undefined; touch(); render(); }; return; }
     if(a==="addimg"){ el.onchange=async()=>{ const files=[...el.files]; $("status").textContent="Adding images…"; for(const f of files){ try{ c.clues[i].images.push({src:await shrink(f),cap:f.name.replace(/\.[^.]+$/,"")}); }catch(e){} } touch(); render(); }; return; }
     el.onclick=()=>{
       const ci=P.cases.indexOf(c);

@@ -82,6 +82,11 @@
 .rimg img{display:block;width:100%;height:auto}
 .srcline{font-style:normal;font-size:15px;margin-top:6px;word-break:break-word}
 .srcline a{color:var(--rust)}
+.synlist{margin:8px 0 10px}
+.synlist summary{cursor:pointer;color:var(--brown);font-style:italic}
+#synList{columns:2;column-gap:28px;font-size:14.5px;padding-left:18px;margin:6px 0}
+#synList li{break-inside:avoid;margin:2px 0}
+@media (max-width:700px){#synList{columns:1}}
 .plainlist{list-style:none;padding-left:0!important}
 .plainlist li{margin:6px 0!important;padding-left:14px;border-left:3px solid var(--line)}
 </style>
@@ -173,12 +178,13 @@
         <summary>How was my score calculated?</summary>
         <p>Your questions are compared with the real protocol using <b>TF-IDF cosine similarity</b>, a standard method for measuring how similar two pieces of text are (Salton &amp; Buckley, 1988).</p>
         <ul>
-          <li><b>Key words.</b> Each question is reduced to its key words: common words like &ldquo;the,&rdquo; &ldquo;you&rdquo; and &ldquo;describe&rdquo; are removed, words are cut to their stems (&ldquo;teaching&rdquo; &rarr; &ldquo;teach&rdquo;), and a short list of synonyms is merged (e.g. barrier / obstacle / challenge).</li>
+          <li><b>Key words.</b> Each question is reduced to its key words: common words like &ldquo;the,&rdquo; &ldquo;you&rdquo; and &ldquo;describe&rdquo; are removed, words are cut to their stems (&ldquo;teaching&rdquo; &rarr; &ldquo;teach&rdquo;), and words on the synonym list below are treated as the same word (e.g. barrier / obstacle / challenge).</li>
           <li><b>TF-IDF weights.</b> Words that appear in only a few protocol questions (like &ldquo;parents&rdquo; or &ldquo;abroad&rdquo;) count more than words that appear in almost every question (like &ldquo;students&rdquo;). Words that never appear in the protocol count fully, so off-topic wording lowers the similarity.</li>
           <li><b>Cosine similarity.</b> Each of your questions is compared with each protocol question and its sub-questions, giving a number from 0 (no key words in common) to 1 (the same key words).</li>
           <li><b>Matching.</b> A protocol question counts as <b>matched</b> if any of your questions reaches 0.45, and <b>close</b> if the best is 0.25&ndash;0.44.</li>
         </ul>
         <p><b>Deduction Score = (matched + &frac12; &times; close) &divide; number of protocol questions &times; 100.</b> Open-ended questions are reported separately and do not change the score.</p>
+        <details class="synlist"><summary>See the synonym list</summary><p class="note">Words on the same line count as the same word. Endings like -s, -ed and -ing are matched automatically.</p><ul id="synList"></ul></details>
         <p>The method compares words, not meaning, so a good question phrased in unusual words can score lower than it deserves. Questions without an arrow may still be excellent; discuss them.</p>
       </details>
       <div class="vactions savebar">
@@ -246,9 +252,18 @@ document.title=CFG.title||document.title;
    question is compared with each protocol question by cosine similarity (0 to 1);
    words that never occur in the protocol get the highest IDF, so off-topic words lower the similarity. */
 const STOPW=new Set(("a an the of in on to and or for with by at from as is are was were be been being do does did doing how what which who whom whose why when where that this these those their theirs they them its it into about between other others than there here can could would should may might must will shall has have had having i you we our ours your yours his her hers him he she s me my mine any some if so please tell explain elaborate describe share talk walk through like way ways also many much one ones get got make made really kind sort etc e g eg things thing something anything everything yourself yourselves feel felt think thinking believe believed regarding relation related role example examples provide not no yes all most more less very just well able about being own want wants wanted new present study both each either same such then too again further once only").split(/\s+/));
-const SYN=[["barrier","obstacl","challeng","hinder","difficult","difficulti","struggl","hard","prevent","problem","constrain"],["help","support","assist","facilitat","enabl"],["defin","definit","meaning"],["importan","matter","valu","significan","worth"],["develop","grow","growth","learn","build","built"],["teacher","teach","educator","instructor","faculty","professor","staff"],["student","pupil","learner","kid","child"],["parent","famil","guardian","mother","father"],["school","campus","college","universit","institution"],["strateg","approach","techniqu","method","practic","tactic"],["relationship","rapport","bond","connect","trust"],["experienc","event","situation","moment","time","instanc","occasion"],["future","career","job","plan"],["abroad","overseas","international","travel","countr"],["transfer","apply","appli","carry","translat"],["factor","influenc","contribut","reason","cause"],["opinion","view","perspectiv","perceiv","percept","attitud"],["goal","purpos","aim","objectiv"],["skill","competenc","abilit"],["success","achiev","accomplish"],["year","long"],["advic","advis","recommend","suggest"],["improv","better","enhanc","strengthen"],["controvers","sensitiv"],["train","prepar","tool","resourc"],["identit","identif"],["expect","pressur"],["participat","involv","engag","join","enrol"],["benefit","gain","takeaway","outcom"],["environment","setting","classroom","climat","space"],["lead"],["languag","tongu","speak","bilingual"],["risk","danger","concern","harm","downsid"],["differ","compar","versus","vs","contrast"],["social","peer","friend"],["academ","grade","coursework"],["behavio","conduct","disciplin"],["veteran","vet","military","soldier","servic"],["sport","athlet","team","coach","game"],["global","world"],["citizen"],["decid","decision","chose","choos","pick"],["become","became","becom","start","first"],["else","add","discuss","miss","additional"]];
-const CANON=new Map(); SYN.forEach((g,i)=>g.forEach(p=>CANON.set(p,"§"+i)));
-function canonTok(w){ for(const [p,id] of CANON){ if(w.startsWith(p)) return id; } return w.replace(/(ships?|ations?|ings?|ments?|ness|ities|ity|ies|ied|ed|es|ly|s)$/,"").slice(0,6); }
+/* Synonym groups: one group per line, comma-separated single words. Each word is reduced to a stem;
+   a token joins the group when it equals a stem or a stem plus a common ending (s, es, ed, ing, er, ion, ...). */
+const DEFAULT_SYNONYMS=/*__SYNONYMS__*/"";
+const ENDINGS=/^(e|s|es|d|ed|ing|ings|er|ers|ly|al|ally|ment|ments|ement|ements|ship|ships|ies|ied|y|ion|ions|ity|ities|ive|ize|ized|ise|ised|ness)?$/;
+function stemWord(w){ w=w.toLowerCase().replace(/[^a-z]/g,""); return w.length>4?w.replace(/(ies|es|s|ing|ed|e|y)$/,""):w; }
+function parseSynonyms(text){ const groups=[]; String(text||"").split(/\r?\n/).forEach(line=>{ const ws=line.split(/[,;]/).map(x=>x.trim()).filter(x=>/^[A-Za-z'’-]+$/.test(x)); if(ws.length>1) groups.push(ws); }); return groups; }
+let SYN_STEMS=[];
+function setSynonyms(text){ const list=[]; parseSynonyms(text).forEach((g,i)=>g.forEach(w=>{ const st=stemWord(w); if(st.length>=2) list.push([st,"§"+i]); })); list.sort((x,y)=>y[0].length-x[0].length); SYN_STEMS=list; }
+function canonTok(w){
+  for(const [st,id] of SYN_STEMS){ if(w.startsWith(st)&&ENDINGS.test(w.slice(st.length))) return id; }
+  return w.replace(/(ships?|ations?|ings?|ments?|ness|ities|ity|ies|ied|ed|es|ly|s)$/,"").slice(0,6);
+}
 function normT(t){return String(t).replace(/\[[^\]]*\]/g," ").toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9]+/g," ").trim();}
 function keyToks(t){const out=[]; normT(t).split(" ").forEach(w=>{ if(w.length>1&&!STOPW.has(w)){ const c=canonTok(w); if(!out.includes(c)) out.push(c);} }); return out;}
 function buildIndex(allQs){ // allQs: [{t,subs}] -> {idf, per-question units with unit vectors}
@@ -266,6 +281,7 @@ function similarity(mineText, IX, qi){ // best cosine between a student question
   return Math.max(0,...IX.qs[qi].map(u=>cosine(v,u.v)));
 }
 
+setSynonyms(CFG.synonyms!=null?CFG.synonyms:DEFAULT_SYNONYMS);
 const MATCH=0.45, CLOSE=0.25;
 function craft(q){
   const t=q.trim().toLowerCase().replace(/^["“(]+/,""); let s;
@@ -620,6 +636,7 @@ $("rptClose").onclick=()=>$("rptModal").classList.remove("show");
 $("modalClose").onclick=$("modal").onclick=e=>{if(e.target.id!=="modalImg") $("modal").classList.remove("show");};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){ $("modal").classList.remove("show"); $("rptModal").classList.remove("show"); }});
 
+$("synList").innerHTML=parseSynonyms(CFG.synonyms!=null?CFG.synonyms:DEFAULT_SYNONYMS).map(g=>`<li>${g.map(escH).join(" · ")}</li>`).join("");
 $("actTitle").textContent=CFG.title||"The Case of the Missing Interview Questions";
 $("actSub").textContent=CFG.subtitle||"";
 if(!CASES.length) $("cases").innerHTML='<p style="color:#e8d6b3;font-style:italic">No case files yet.</p>';

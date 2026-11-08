@@ -8,7 +8,7 @@ Students choose a case, study the clues, write the interview questions they thin
 
 ## Scoring
 
-Questions are compared with **TF-IDF cosine similarity** (Salton & Buckley, 1988). Each protocol question and sub-question is a document; words are lower-cased, stop words removed, stemmed, and a short synonym list is merged. IDF uses the smoothed form ln((1+N)/(1+df)) + 1, computed over the protocol; words that never appear in the protocol get the maximum weight, so off-topic wording lowers similarity. A protocol question is **matched** when any student question reaches a cosine similarity of 0.45, and **close** at 0.25–0.44 (cutoffs calibrated on sample good and unrelated question pairs).
+Questions are compared with **TF-IDF cosine similarity** (Salton & Buckley, 1988). Each protocol question and sub-question is a document; words are lower-cased, stop words removed, stemmed, and words in the same synonym group are treated as one term. The default synonym list (`src/synonyms.txt`, about 60 groups such as barrier / obstacle / challenge) can be edited per activity in the builder and is shown to students. IDF uses the smoothed form ln((1+N)/(1+df)) + 1, computed over the protocol; words that never appear in the protocol get the maximum weight, so off-topic wording lowers similarity. A protocol question is **matched** when any student question reaches a cosine similarity of 0.45, and **close** at 0.25–0.44 (cutoffs calibrated on sample good and unrelated question pairs).
 
 Deduction Score = (matched + ½ × close) ÷ number of protocol questions × 100. The share of open-ended questions is reported separately and does not affect the score.
 
@@ -31,6 +31,7 @@ python3 build.py
 - `src/builder-src.html`: the teacher builder
 - `src/student-template-src.html`: the student activity (the builder fills in `/*__CONFIG__*/`)
 - `src/student-base.css.html`: shared base styles for the student activity
+- `src/synonyms.txt`: the default synonym list (one group per line)
 - `src/scorer.js`: reference copy of the TF-IDF scorer (also inlined in the student template)
 
 ## Starter cases
