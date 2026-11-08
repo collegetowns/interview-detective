@@ -129,7 +129,7 @@ footer a{color:var(--tan2)}
       <h3 style="margin-top:14px">Case files</h3>
       <div id="caseNav"></div>
       <button class="btn full" id="addCase">+ New case file</button>
-      <button class="btn ghost full" id="addExample" style="margin-top:8px">+ Add a fictional example case</button>
+      <button class="btn ghost full" id="addExample" style="margin-top:8px">+ Add a starter case<br><span style="font-size:14px;font-style:italic">real open-access studies</span></button>
       <details class="howto" style="margin-top:16px">
         <summary>How it works</summary>
         <ul>
@@ -139,6 +139,7 @@ footer a{color:var(--tan2)}
           <li>Students can save a typewritten &ldquo;case report&rdquo; image to submit.</li>
           <li>Your work saves automatically in this browser. To edit a finished activity later, use <b>Open an activity</b> and choose its downloaded HTML file.</li>
         </ul>
+        <p class="note">Starter cases reproduce open-access articles under their Creative Commons licenses (CC BY 4.0 or CC BY-NC 4.0), with citation, link and license shown to students.</p>
         <p class="note">Everything you enter is built into the file you download, including abstracts and images, so use material you have the right to share with your students (for example, open-access articles).</p>
       </details>
     </aside>
@@ -171,22 +172,69 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ---------- state ---------- */
-const blankCase=()=>({key:uid(),name:"",tagline:"",title:"",cite:"",abstract:"",rqIntro:"",rqsText:"",clues:[],protoTitle:"Interview Protocol",sections:[{key:uid(),h:"",warm:false,brief:"",text:""}]});
+const blankCase=()=>({key:uid(),name:"",tagline:"",title:"",cite:"",url:"",license:"",abstract:"",rqIntro:"",rqsText:"",clues:[],protoTitle:"Interview Protocol",sections:[{key:uid(),h:"",warm:false,brief:"",text:""}]});
 const blankProject=()=>({id:uid(),title:"The Case of the Missing Interview Questions",subtitle:"The interview protocols have vanished. Read the clues, then reconstruct what the researchers asked.",cases:[]});
 let P=blankProject(), sel="settings";
 
-const EXAMPLE={name:"First-Generation Students",tagline:"Twelve first-year students. One question: do they belong here?",
-  title:"“Am I supposed to be here?” Belonging among first-generation college students (fictional example)",
-  cite:"Example, A., & Sample, B. (2026). A fictional study created for demonstration purposes. Not a real publication.",
-  abstract:"This qualitative study explores how first-generation college students experience a sense of belonging during their first year at a mid-sized public university. Twelve first-year students whose parents did not complete a four-year degree participated in two semi-structured interviews, one in the fall and one in the spring. Students described belonging as something earned through small moments of recognition from faculty and peers rather than something granted at orientation. Many reported a “double life” between home and campus, balancing family responsibilities and paid work with academic expectations. Campus employment, peer mentoring and approachable instructors emerged as the strongest supports, while hidden curriculum (unwritten rules about office hours, email etiquette and course registration) was the most common barrier. Implications for first-year programming and faculty development are discussed.",
-  rqIntro:"Two research questions guided the study:",
-  rqsText:"1. How do first-generation college students describe their sense of belonging during their first year of college?\n2. What campus experiences, people and resources support or hinder that sense of belonging?",
-  clues:[{key:uid(),title:"Findings: Themes",subtitle:"From the researchers’ notes",text:"Theme 1. Belonging is earned, not granted: being remembered by name; a professor’s comment on a paper.\n\nTheme 2. Living a double life: family responsibilities, paid work, explaining college to relatives.\n\nTheme 3. The hidden curriculum: not knowing what office hours are for; fear of asking “obvious” questions.\n\nTheme 4. Anchors on campus: campus jobs, peer mentors, one approachable instructor.",images:[]}],
-  protoTitle:"Student Interview Protocol (Fall)",
-  sections:[
-    {key:uid(),h:"Getting to know you",warm:true,brief:"",text:"Tell me a little about yourself and how you decided to come to this university.\nWhat did your family think about you going to college?\nWhat were you expecting college to be like before you arrived?"},
-    {key:uid(),h:"Main questions",warm:false,brief:"",text:"What does it mean to you to “belong” at a college?\nDescribe a moment this year when you felt like you belonged here.\nDescribe a moment when you felt like you did not belong.\nWho on campus has helped you feel more at home? How did they help?\nWhat parts of college have been confusing or unwritten that no one explained to you?\nHow do you balance your responsibilities at home or at work with your schoolwork?\n  How has that balance affected your time on campus?\nWhat campus resources or programs have you used, and how helpful were they?\nWhat could the university do to help students like you feel that they belong?\nIs there anything else about your first year you would like to share?"}
-  ]};
+/* Starter cases: real open-access studies, reproduced under their Creative Commons licenses with attribution. */
+const STARTERS=[
+{
+  name:"Special Education",
+  tagline:"Twelve teachers. One shared table. What happens when special educators join the team?",
+  title:"Inclusive Professional Learning Communities and Special Education Collaboration: A Qualitative Case Study in Texas",
+  cite:"Wilshire, J. M., II, Voelkel, R. H., Jr., Pazey, B., & Van Tassell, F. (2025). Inclusive professional learning communities and special education collaboration: A qualitative case study in Texas. Education Sciences, 15(10), 1279.",
+  url:"https://doi.org/10.3390/educsci15101279",
+  license:"CC BY 4.0",
+  abstract:"This qualitative descriptive case study explored the perceptions of six general education and six special education teachers regarding their joint participation in professional learning communities (PLCs) in a rural district in Texas. Through semi-structured interviews and thematic analysis, two major categories emerged: (1) the differentiated roles of special education teachers within PLCs and (2) the collaborative construction of pedagogical strategies based on interdisciplinary teamwork. Both of the teacher groups described the contributions of their counterparts as integral to their teaching effectiveness and spoke of the need for protected time for PLC team meetings and the inclusion of special education teachers in PLCs. Although existing literature acknowledges the importance of PLCs, few studies critically examined how special education teachers contribute to shared planning and pedagogical decision-making alongside their general education colleagues. The findings suggest that inclusive PLCs can become collaborative ecosystems that redefine teacher education and innovation in diverse educational contexts.",
+  rqIntro:"The study took place in a rural Texas school district (pseudonym: Pleasantville ISD) that includes special education teachers in all of its PLCs. Twelve teachers (six general education, six special education) from two elementary schools, one middle school and one high school took part in one-on-one, semi-structured interviews.\n\nThe research question that guided this study was:",
+  rqsText:"What are general and special education teachers’ perceptions about the effects of including special education teachers in campus PLCs and the resulting impact on the learning of all students, including students with disabilities?",
+  clues:[{title:"Findings: Themes and Subthemes",subtitle:"From the Findings section",text:"Theme 1: Teacher Role and Function in the School Versus on PLC Teams\n• Role and Function in the School\n• Role and Function in the PLC\n\nTheme 2: Teacher Teamwork\n• Team Effort and Collaboration\n• Special Education Teacher’s Knowledge About How Students Learn and Their Contribution to Student Achievement\n• Special Education Teachers Feeling Like a Part of the PLC Team\n• PLC Team Involvement Leads to Changing One’s Instructional Practice\n• Wish Lists and Recommendations for Improvement",images:[]}],
+  protoTitle:"Appendix A. One-On-One Interview Questions",
+  sections:[{h:"",warm:false,brief:"",text:"Talk to me about how the special education/general education teacher functions on your campus.\n  a. How do they function as a member of your PLC?\n  b. What kind of contributions or insights do they bring to the overall functioning of your PLC team?\nPlease discuss your participation in PLC team meetings.\n  a. What role do you play in the growth of students?\n  b. What role do general education/special education teachers play in supporting each other in the PLC team and student learning?\nDescribe examples of your contributions in PLC meetings that have led to increased student achievement.\nShare a time when the participation of general education/special education teachers in a PLC team meeting worked well together to improve students’ academic performance.\nShare a time during your PLC team meetings when the input of a special education/general education teacher changed the general education teacher’s instructional practice.\n  a. Can you think of any additional examples?\nDescribe a time during a PLC meeting when a special education teacher/general education teacher filled the knowledge gap of the other?\nDescribe a time during your PLC team meetings when a special education/general education teacher supported and changed the growth of general education/special education teachers in how students learn.\nIf you had three wishes for making your PLCs team more effective, what would they be?\nDo you have any final comments or anything else you want to add?"}]
+},
+{
+  name:"Global Citizenship",
+  tagline:"Twenty future social studies teachers. What does it mean to be a citizen of the world?",
+  title:"Pre-service Teachers’ Perceptions of Global Citizenship Education in the Social Studies Curriculum",
+  cite:"Andrews, K., & Aydin, H. (2020). Pre-service teachers’ perceptions of global citizenship education in the social studies curriculum. Journal of Social Studies Education Research, 11(4), 84–113.",
+  url:"https://files.eric.ed.gov/fulltext/EJ1281589.pdf",
+  license:"CC BY 4.0",
+  abstract:"Schools in the United States are becoming increasingly multiculturally diverse; therefore, identifying a means to implement global citizenship effectively into the social studies curriculum is imperative. This qualitative case study sought to gain insight into the perceptions of pre-service teachers on global citizenship education in social studies. Twenty students were selected purposively for this study. Data were obtained from multiple sources, including open-ended semi-structured focus group interviews, classroom observations, discussion posts, and essay questions were analyzed. To increase the verisimilitude of the study, the researchers bracketed themselves and used member checking and outside readers. The findings of this study indicated that global citizenship should be incorporated by teachers for students to become culturally sensitive and to gain an awareness of global issues. As global citizens, students should possess the tools and resources to advocate for social justice, unity, and equity. Their knowledge of historical and current events, viewed through critical and analytical lenses, would expose the unjust/just and unfavorable/favorable outcomes and activities. Hence, this knowledge equips students with the wisdom to form economic, political, social, and environmental decisions to create a better world.",
+  rqIntro:"Participants were 20 pre-service teachers in a secondary social studies methods course at a public university in the southeastern United States. Ten of them also took part in focus group or individual interviews.\n\nThe research questions were:",
+  rqsText:"1. What are the perceptions of pre-service teachers of the definition of global citizenship?\n2. What are the perceptions of pre-service teachers about the importance of implementing global citizenship education into the pre-K-12 curriculum?\n3. How do pre-service teachers perceive that global citizenship education can be incorporated into the current social studies curriculum?",
+  clues:[{title:"Findings: Coding Frequencies",subtitle:"Number of participants (of 20) who referenced each theme",text:"Table 1. RQ1: Definition of global citizenship\n• Active participation / Working together: 15\n• Cultural awareness: 15\n• Citizens of the world / planet: 11\n• Being informed about cultures: 10\n• Respect for others: 7\n• Equality: 7\n• Empathy: 5\n• Civic duties: 5\n• Human rights: 2\n\nTable 2. RQ2: Importance of global citizenship education in pre-K-12\n• Teach citizenship for a culturally diverse world: 14\n• Teach respect for others who do not share the same culture / empathy: 13\n• Teach cultures, beliefs, and values: 13\n• Awareness of global interactions: 10\n• Open minds / new perspectives: 10\n• To recognize and appreciate differences: 8\n• Shifting demographics: 8",images:[]}],
+  protoTitle:"Interview/Focus Group Questions",
+  sections:[{h:"",warm:false,brief:"Interviews conducted in April: Questions were follow-up questions in response to the discussion board questions and midterm questions to provide additional insight from the participants.",text:"What do you perceive to be the most emerging and important issues in society that should be addressed in the social studies curriculum?\nHow do you believe the meaning or implications of citizenship has transpired or changed over the course of history in the United States? What has caused this change?\nWhat has been your educational or personal experiences that would pertain to global citizenship or being a global citizen?\nWhat qualities, experiences, or expertise do you believe teachers should have or acquire to be competent in teaching global citizenship?\nDo you believe most teachers possess the competencies to teach global citizenship? If yes, why? / Why not? Please explain.\nExplain the ways in which global citizenship education, if incorporated into the PreK-12 social studies curriculum, would strengthen or weaken a student's preparedness for participation in their local, national, and global society.\nDo you feel students in pre-K-12 are currently being prepared for participation in a global society?\nDo you believe it is important for all students in all areas (rural and urban) to become global citizens? Why do you feel this way?\nIs it possible to teach students empathy or “see” issues and events through other cultural perspectives? Can you teach a student to respect others? Please explain.\nDo you believe it is within a teachers’ jurisdiction to teach values and morals to students? Why or why not?\nWhat do you feel are some pros and cons to including nationalism in the curriculum?\nIs there anything additional you would like to contribute?"}]
+},
+{
+  name:"Student-Athlete Transition",
+  tagline:"Twenty-three Division I athletes. From high school recruit to college freshman. What did no one tell them?",
+  title:"“I Didn’t Know How All This Works”: A Case Study Examining the Transition Experiences of Student-Athletes from High School to a Mid-Major DI Program",
+  cite:"Woltring, M. T., Hauff, C., Forester, B., & Holden, S. L. (2021). “I didn’t know how all this works”: A case study examining the transition experiences of student-athletes from high school to a mid-major DI program. Journal of Athlete Development and Experience, 3(2), Article 4.",
+  url:"https://doi.org/10.25035/jade.03.02.04",
+  license:"CC BY-NC 4.0",
+  abstract:"The transition period from high school to college includes a myriad of issues specific to student-athletes (Bernhard & Bell, 2015; Bjornsen & Dinkel, 2017; Comeaux, 2015). The present study sought to illuminate the specific transition issues faced by mid-major, DI student-athletes by providing them the platform to describe them in their own words and provide their own recommendations for improvement. Utilizing a semi-structured interview guide that addressed transition issues, the qualitative study included 23 student-athletes in focus group settings. Analysis of interview data led to the emergence of two themes, with accompanying subthemes: (1) encounters with academic support, with subthemes of transitioning to campus and perceived responsibilities of athletic academic advisors; and (2) skewed perceptions and expectations of student-athlete life, with subthemes of expectations regarding the coach-athlete relationship, lifestyle modifications, and high-stress practice environments. The findings suggest a notable trend – student-athletes lack the support they need to successfully deal with the transition. The transition process itself also appears to involve three specific periods: (1) Prior to arrival on campus; (2) Initial arrival on campus; and (3) Following the initial transition to campus. The findings will help to better design standards for helping student-athletes navigate the transition process.",
+  rqIntro:"In all, 23 student-athletes (5 male, 18 female) participated in five focus groups between August and December 2019. Most were on full scholarship and aged 19 to 21. The study was part of a larger project that also examined the university’s required first-year life skills course for student-athletes (PE 158).\n\nThe article states a purpose rather than formal research questions:",
+  rqsText:"The purpose of this study was to explore the experiences current DI student-athletes had transitioning from a high school to college setting.",
+  clues:[],
+  protoTitle:"Appendix B: Focus Group Question Guide",
+  sections:[{h:"",warm:false,brief:"",text:"Describe your experience transition from a high school recruit to a DI student-athlete.\n  a. What obstacles did you face?\n  b. What was the hardest part of your transition from high school to college in the classroom?\n  c. What do you know now that you wish you would have known in your first few weeks or months as a DI athlete?\n  d. What did the [University involved in study] Athletic Department do to help with your transition? (If they did not do anything, what do you wish would have been done?)\n  e. What did your coaches (head/assistant/strength conditioning/volunteer) do to help with your transition, if anything? (If they did not do anything, what do you wish would have been done?)\n  f. What did you teammates do to help with your transition? (If they did not do anything, what do you wish would have been done?)\n  g. What was the most difficult part of the transition to college athletics?\n  h. What was the most difficult part of transitioning to college socially?\nDo you feel you were prepared for college athletics? Why or why not?\n  a. Class/practice/travel schedule?\n  b. Stress coping mechanisms?\n  c. Alone for the first time in your life?\n  d. Support from coaches/faculty/staff?\n  e. Ease of navigating on campus?\nDescribe your experience with [University involved in present study] PE 158 course.\n  a. What were the positives and negatives?\n  b. Did it prepare you appropriately for the upcoming semester/season?\n  c. If the course was optional, would you recommend it to other student-athletes? Why or why not?\nIf [University involved in present study] was to develop a new life skills program for incoming freshman student-athletes, what would you want the program to include?\nFor student-athletes moving into their sophomore, junior, and senior seasons, what types of academic programming would be most beneficial for them?\n  a. Athletic?\n  b. Life Skills?\nHow would you describe your experience with student-athlete academic services?\n  a. In what ways is/has this department preparing/prepared you for success?\n  b. What could this department be doing differently?\nIs there anything else you would like to share regarding your experience(s) with life skills programs?"}]
+},
+{
+  name:"Higher Ed Veteran Students",
+  tagline:"Fourteen veterans on campus. Which experiences do they seek, and what stands in the way?",
+  title:"Student Veterans’ Participation in High-Impact Practices: Veterans’ Experiences at Three Institutions of Higher Education in Southeastern North Carolina",
+  cite:"Kappell, J., Boersma, J., DeVita, J., & Parker, M. (2017). Student veterans’ participation in high-impact practices: Veterans’ experiences at three institutions of higher education in southeastern North Carolina. Journal of Veterans Studies, 2(1), 29–49.",
+  url:"https://doi.org/10.21061/jvs.v2i1.27",
+  license:"CC BY 4.0",
+  abstract:"This qualitative study explores student veteran engagement in educational practices the Association of American Colleges & Universities (AAC&U) identifies as High-Impact Practices (HIPs). This is a result of a university-wide systematic study on how to enhance equitably HIPs for all students at the authors’ institution, later broadening to encompass three institutions in North Carolina of varying size and mission: (a) Mid-sized Regional University (MRU), a comprehensive regional university; (b) State Community College (SCC), a two-year public institution located within 10 miles of MRU; and (c) Small College, a small, private liberal arts college. Fourteen student veterans were interviewed about their perceptions of, and participation in, HIPs. We found that common Intellectual Experiences, Writing Intensive Courses, Collaborative Assignments, and Diversity/Global Learning modalities were the HIPs most utilized. Additionally, three themes emerged: mission-orientation, competing priorities, and marketing to student veteran populations. Although contextualized within the state of North Carolina, implications and recommendations from the current study provide meaningful insights for both practice and further research on student veterans.",
+  rqIntro:"The total data set included 45 participant interviews from three sub-populations of college students: (a) student veterans, (b) Black male undergraduates, and (c) Christian students attending religiously-affiliated institutions. In the current study, the author selected all student veteran participants and examined those interviews using the following research questions:",
+  rqsText:"1. What learning experiences (HIPs) do student veterans participate in and value in developing the skills and competencies they view as important?\n2. What are the perceived barriers to student veteran participation in HIPs and how can the institutions address these barriers?",
+  clues:[{title:"Background: What Are HIPs?",subtitle:"A reference for the investigator",text:"The Association of American Colleges & Universities (AAC&U) maintains a list of High-Impact Practices, educational experiences shown to benefit students. Look up the list before writing your questions:\nhttps://www.aacu.org/featured-topics/high-impact",images:[]}],
+  protoTitle:"Interview Questions",
+  sections:[{h:"",warm:false,brief:"",text:"Tell me about your experiences as a college student. What stands out to you when you think about your time as a college student?\nWhat are some successes you’ve had as a college student? Provide examples or anecdotes.\nWhat factors contributed to those successes? How did they help you succeed?\nWhat are some challenges you’ve encountered as a college student? Provide examples or anecdotes.\nWhat factors contributed to those challenges? How did they help you to overcome them?\nWhat identities do you consider most important to you? Why are those most important?\nAre there any expectations or pressures that you feel because of those identities? Why do you think those exist?\nHave you participated in or are you planning to participate in any of the following?\n  a. First-Year Seminar and/or Experiences\n  b. Common Intellectual Experiences (e.g., Transdisciplinary Clusters, General Education)\n  c. Learning Community\n  d. Writing-Intensive Courses\n  e. Collaborative Assignments and Projects\n  f. Undergraduate Research\n  g. Diversity/Global Learning\n  h. Service Learning, Community-Based Learning\n  i. Internships\n  j. Capstone Courses and Projects\nIf you did, what do you feel you gained from each specific experience in terms of educational growth and/or job preparation?\nIf you didn’t or don’t plan to, are there any specific reasons why you didn’t?\nDo you feel there are any barriers specific to Vets participation in these activities?\nHow should faculty and staff advertise the importance of these activities to veterans?\nHow do you pursue these opportunities?"}]
+}
+];
 
 /* ---------- persistence (IndexedDB, falls back to memory) ---------- */
 let db=null;
@@ -201,8 +249,8 @@ function parseProtocol(text){
   const qs=[];
   String(text||"").split(/\r?\n/).forEach(line=>{
     if(!line.trim()) return;
-    const isSub=/^(\s{2,}|\t)/.test(line)||/^\s*[-–•*]\s+/.test(line)||/^\s*\(?([a-h]|i{1,3}|iv|vi{0,3}|ix|x)[\.\)]\s+/.test(line);
-    const clean=line.trim().replace(/^[-–•*]\s+/,"").replace(/^\(?(\d{1,2}|[a-h]|i{1,3}|iv|v|vi{0,3}|ix|x)[\.\):]\s+/i,"").replace(/^Q\d+[\.\):]?\s+/i,"").trim();
+    const isSub=/^(\s{2,}|\t)/.test(line)||/^\s*[-–•*]\s+/.test(line)||/^\s*\(?([a-z]|ii|iii|iv|vi|vii|viii|ix)[\.\)]\s+/.test(line);
+    const clean=line.trim().replace(/^[-–•*]\s+/,"").replace(/^\(?(\d{1,2}|[a-z]|ii|iii|iv|vi|vii|viii|ix)[\.\):]\s+/i,"").replace(/^Q\d+[\.\):]?\s+/i,"").trim();
     if(!clean) return;
     if(isSub&&qs.length) qs[qs.length-1].subs.push(clean); else qs.push({t:clean,subs:[]});
   });
@@ -222,7 +270,7 @@ function caseIssues(c){
 function toConfig(){
   return {id:P.id,title:P.title.trim()||"The Case of the Missing Interview Questions",subtitle:P.subtitle.trim(),
     cases:P.cases.filter(c=>caseIssues(c).filter(x=>!x.startsWith("has no clues")).length===0).map(c=>({
-      name:c.name.trim(),tagline:c.tagline.trim(),title:c.title.trim(),cite:c.cite.trim(),abstract:c.abstract,rqIntro:c.rqIntro.trim(),rqs:lines(c.rqsText),
+      name:c.name.trim(),tagline:c.tagline.trim(),title:c.title.trim(),cite:c.cite.trim(),url:(c.url||"").trim(),license:(c.license||"").trim(),abstract:c.abstract,rqIntro:c.rqIntro.trim(),rqs:lines(c.rqsText),
       clues:c.clues.map(k=>({title:k.title.trim(),subtitle:(k.subtitle||"").trim(),text:k.text,images:k.images.map(i=>({src:i.src,cap:i.cap}))})),
       protoTitle:c.protoTitle.trim()||"Interview Protocol",
       sections:c.sections.filter(s=>parseProtocol(s.text).length).map(s=>({h:s.h.trim(),warm:!!s.warm,brief:s.brief.trim(),qs:parseProtocol(s.text)}))
@@ -236,11 +284,11 @@ function buildStudentHTML(){
 }
 function fromConfig(cfg){
   const roman=["i","ii","iii","iv","v","vi","vii","viii","ix","x"];
-  return {id:cfg.id||uid(),title:cfg.title||"",subtitle:cfg.subtitle||"",cases:(cfg.cases||[]).map(k=>({key:uid(),name:k.name||"",tagline:k.tagline||"",title:k.title||"",cite:k.cite||"",abstract:k.abstract||"",rqIntro:k.rqIntro||"",rqsText:(k.rqs||[]).join("\n"),
+  return {id:cfg.id||uid(),title:cfg.title||"",subtitle:cfg.subtitle||"",cases:(cfg.cases||[]).map(k=>({key:uid(),name:k.name||"",tagline:k.tagline||"",title:k.title||"",cite:k.cite||"",url:k.url||"",license:k.license||"",abstract:k.abstract||"",rqIntro:k.rqIntro||"",rqsText:(k.rqs||[]).join("\n"),
     clues:(k.clues||[]).map(cl=>({key:uid(),title:cl.title||"",subtitle:cl.subtitle||"",text:cl.text||"",images:(cl.images||[]).map(i=>({src:i.src,cap:i.cap||""}))})),
     protoTitle:k.protoTitle||"Interview Protocol",
     sections:(k.sections||[]).map(s=>({key:uid(),h:s.h||"",warm:!!s.warm,brief:s.brief||"",
-      text:(s.qs||[]).map(q=>[q.t].concat((q.subs||[]).map((x,j)=>"  "+(q.subs.length>8?roman[j]:"abcdefgh"[j])+". "+x)).join("\n")).join("\n")}))}))};
+      text:(s.qs||[]).map(q=>[q.t].concat((q.subs||[]).map((x,j)=>"  "+"abcdefghijklmnopqrstuvwxyz"[j]+". "+x)).join("\n")).join("\n")}))}))};
 }
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"activity";
 
@@ -263,7 +311,7 @@ function render(){
       ${field("Activity title","",inp("title",P.title))}
       ${field("Subtitle","One or two sentences under the title.",ta("subtitle",P.subtitle))}
       </fieldset>
-      ${P.cases.length?"":`<div class="empty"><p>Start by adding a case file on the left, or add the fictional example to see how it works.</p><button class="btn dark" onclick="document.getElementById('addExample').click()">Add the fictional example</button></div>`}`;
+      ${P.cases.length?"":`<div class="empty"><p>Start by adding a case file on the left, or add one of the starter cases (real open-access studies) to see how it works.</p><button class="btn dark" onclick="document.getElementById('addExample').click()">Browse starter cases</button></div>`}`;
   } else {
     const ci=P.cases.findIndex(c=>c.key===sel); const c=P.cases[ci];
     if(!c){ sel="settings"; return render(); }
@@ -274,6 +322,7 @@ function render(){
         <div class="row2">${field("Topic name *","Shown on the case folder, e.g. “Special Education”.",inp("c.name",c.name,"Topic"))}${field("Teaser line","One short, intriguing sentence for the folder.",inp("c.tagline",c.tagline,"Nine teachers. One question…"))}</div>
         ${field("Article title","",inp("c.title",c.title))}
         ${field("Citation","",inp("c.cite",c.cite,"Author, A. (Year). Title. Journal, vol(issue), pages."))}
+        <div class="row2">${field("Link to the article","DOI or web address. Students get a link to the source.",inp("c.url",c.url||"","https://doi.org/…"))}${field("License","e.g. CC BY 4.0. Shown with the citation.",inp("c.license",c.license||"","CC BY 4.0"))}</div>
       </fieldset>
       <fieldset><legend>Clue: the abstract <span class="tag">STUDENTS SEE</span></legend>
         ${field("Abstract","Paste the abstract. Leave a blank line between paragraphs.",ta("c.abstract",c.abstract))}
@@ -349,7 +398,12 @@ function shrink(file){return new Promise((res,rej)=>{const r=new FileReader(); r
 
 /* ---------- actions ---------- */
 $("addCase").onclick=()=>{ const c=blankCase(); P.cases.push(c); sel=c.key; touch(); render(); };
-$("addExample").onclick=()=>{ const c=Object.assign(blankCase(),JSON.parse(JSON.stringify(EXAMPLE))); c.key=uid(); c.clues.forEach(k=>k.key=uid()); c.sections.forEach(s=>s.key=uid()); P.cases.push(c); sel=c.key; touch(); render(); };
+$("addExample").onclick=()=>{
+  dialog(`<h3>Starter cases</h3><p class="note" style="margin-top:0">Real, open-access studies whose licenses allow sharing with attribution. The citation, link and license travel with the case. Add one, then edit it however you like.</p>
+  ${STARTERS.map((s,i)=>{const have=P.cases.some(c=>c.title===s.title); return `<div class="card"><div style="display:flex;gap:12px;align-items:flex-start"><div style="flex:1"><b>${esc(s.name)}</b><div style="font-size:15px;margin-top:2px">${esc(s.cite)}</div><div style="font-size:14px;margin-top:4px"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a> &middot; ${esc(s.license)}</div></div><button class="btn small ${have?"":"dark"}" data-starter="${i}" ${have?"disabled":""}>${have?"Added":"Add"}</button></div></div>`;}).join("")}
+  <div class="acts"><button class="btn" onclick="closeDialog()">Done</button></div>`);
+  document.querySelectorAll("[data-starter]").forEach(btn=>btn.onclick=()=>{ const s=STARTERS[+btn.dataset.starter]; const c=Object.assign(blankCase(),JSON.parse(JSON.stringify(s))); c.key=uid(); c.clues.forEach(k=>k.key=uid()); c.sections.forEach(x=>x.key=uid()); P.cases.push(c); sel=c.key; touch(); render(); btn.disabled=true; btn.textContent="Added"; btn.classList.remove("dark"); });
+};
 function dialog(html){ $("dlg").innerHTML=html; $("dlgModal").classList.add("show"); }
 function closeDialog(){ $("dlgModal").classList.remove("show"); }
 function readyCases(){ return P.cases.filter(c=>caseIssues(c).filter(x=>!x.startsWith("has no clues")).length===0); }
