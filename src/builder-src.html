@@ -139,7 +139,7 @@ footer a{color:var(--tan2)}
         <ul>
           <li>Students choose a case, study the clues, and write the interview questions they think the researchers asked.</li>
           <li>&ldquo;Ready to Compare&rdquo; reveals your answer key beside their questions, with arrows linking similar ones.</li>
-          <li>The score (0&ndash;100) is automatic: 80% how much of the real protocol their questions cover (matching distinctive words and common synonyms), 20% whether their questions are open-ended.</li>
+          <li>Scoring uses <b>TF-IDF cosine similarity</b>, a standard text-similarity measure. Each student question is compared with every protocol question; a protocol question is <b>matched</b> at a similarity of 0.45 or higher and <b>close</b> at 0.25&ndash;0.44. Score = (matched + &frac12; close) &divide; protocol questions &times; 100. Students see the similarity on every arrow. Open-ended questions are reported separately.</li>
           <li>Students can save a typewritten &ldquo;case report&rdquo; image to submit.</li>
           <li>Your work saves automatically in this browser. To edit a finished activity later, use <b>Open an activity</b> and choose its downloaded HTML file.</li>
         </ul>
@@ -358,7 +358,6 @@ function render(){
         ${c.sections.map((s,si)=>{const pq=parseProtocol(s.text); const subs=pq.reduce((a,q)=>a+q.subs.length,0);
           return `<div class="card"><div class="cardhead"><b>SECTION ${si+1}</b>${c.sections.length>1?`<button class="btn small danger" data-act="delsec" data-i="${si}">Remove section</button>`:""}</div>
           ${c.sections.length>1||s.h?field("Section name","Students see this as a heading.",inp(`sec.${si}.h`,s.h,"e.g. Personal information")):""}
-          <label class="chk"><input type="checkbox" data-path="sec.${si}.warm" ${s.warm?"checked":""}><span>Warm-up / background section <span class="note">(these questions count half in the score)</span></span></label>
           ${field("Questions","",ta(`sec.${si}.text`,s.text,"What grade level do you teach?\nWhat strategies do you use…?\n  a. In social situations?\n  b. In academic situations?","mono"))}
           <div class="parsed ${pq.length?"":"bad"}" data-parsed="${si}">${pq.length?`&#10003; ${pq.length} question${pq.length>1?"s":""}${subs?`, ${subs} sub-question${subs>1?"s":""}`:""} detected`:"No questions yet"}</div>
           ${field("Briefing (optional)","Anything participants were told before these questions. Revealed with the answer key.",ta(`sec.${si}.brief`,s.brief))}

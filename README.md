@@ -4,7 +4,15 @@ A Sherlock-themed activity builder for research methods classes.
 
 Teachers add one or more **case files** (a study's abstract, research questions and findings as clues, plus its real interview protocol as the answer key), preview the activity, and download it as a single self-contained HTML file to share with students through a learning platform such as Brightspace, through Teams, or by email.
 
-Students choose a case, study the clues, write the interview questions they think the researchers asked, and press **Ready to Compare** to reveal the real protocol. Arrows link their questions to similar ones, and they receive an automatic 0–100 Deduction Score (80% protocol coverage, 20% open-ended question craft). They can save a typewritten "case report" image to submit.
+Students choose a case, study the clues, write the interview questions they think the researchers asked, and press **Ready to Compare** to reveal the real protocol. Arrows link each of their questions to the most similar protocol question, labelled with the similarity, and they receive a 0–100 Deduction Score.
+
+## Scoring
+
+Questions are compared with **TF-IDF cosine similarity** (Salton & Buckley, 1988). Each protocol question and sub-question is a document; words are lower-cased, stop words removed, stemmed, and a short synonym list is merged. IDF uses the smoothed form ln((1+N)/(1+df)) + 1, computed over the protocol; words that never appear in the protocol get the maximum weight, so off-topic wording lowers similarity. A protocol question is **matched** when any student question reaches a cosine similarity of 0.45, and **close** at 0.25–0.44 (cutoffs calibrated on sample good and unrelated question pairs).
+
+Deduction Score = (matched + ½ × close) ÷ number of protocol questions × 100. The share of open-ended questions is reported separately and does not affect the score.
+
+Salton, G., & Buckley, C. (1988). Term-weighting approaches in automatic text retrieval. *Information Processing & Management, 24*(5), 513–523. They can save a typewritten "case report" image to submit.
 
 Live site: https://interviewdetective.collegetowns.org
 
@@ -23,7 +31,7 @@ python3 build.py
 - `src/builder-src.html`: the teacher builder
 - `src/student-template-src.html`: the student activity (the builder fills in `/*__CONFIG__*/`)
 - `src/student-base.css.html`: shared base styles for the student activity
-- `src/scorer.js`: reference copy of the automatic scorer (also inlined in the student template)
+- `src/scorer.js`: reference copy of the TF-IDF scorer (also inlined in the student template)
 
 ## Starter cases
 

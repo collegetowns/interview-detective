@@ -50,9 +50,13 @@
 .compare{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr)}
 @media (max-width:700px){.compare{grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr)}.compare .it{font-size:13px!important}}
 .wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:1}
-.wires path.w{fill:none;stroke:#8c3b1f;stroke-width:2;opacity:.55;transition:opacity .15s,stroke-width .15s}
+.wires path.w{fill:none;stroke:#8c3b1f;stroke-width:2;opacity:.8;transition:opacity .15s,stroke-width .15s}
 .wires path.w.on{opacity:1;stroke-width:3.2}
 .wires.dim path.w:not(.on){opacity:.12}
+.wires path.w.weak{stroke-dasharray:5 4}
+.wires text.wl{font-family:"Special Elite",monospace;font-size:13px;fill:#7a2a14;text-anchor:middle;paint-order:stroke;stroke:#f3e7cc;stroke-width:4px}
+.wires.dim text.wl:not(.on){opacity:.15}
+.it.closem{border-style:dashed;border-color:var(--brown)}
 .col h4.colh{font-family:"IM Fell English",serif;font-weight:400;font-size:22px;margin:0 0 8px;border-bottom:2px solid var(--brown);padding-bottom:4px}
 .col h5{font-family:"IM Fell English SC",serif;font-weight:400;font-size:17px;color:var(--brown);margin:14px 0 6px}
 .it{position:relative;z-index:2;background:#fbf4e3;border:1px solid var(--line);border-radius:2px;padding:7px 10px;margin:0 0 8px;font-size:15.5px;line-height:1.4;transition:background .15s,border-color .15s}
@@ -158,7 +162,7 @@
         </div>
       </div>
       <h3 style="font-size:26px;margin-top:6px">Your protocol vs. the real protocol</h3>
-      <p class="legend">Arrows connect your questions to similar questions in the real protocol. Hover over a question to trace its connection.</p>
+      <p class="legend">Arrows connect each of your questions to the most similar question in the real protocol. The number is the TF-IDF cosine similarity (0 = no shared key words, 1 = identical). Solid arrows are matches (0.45 or higher); dashed arrows are close (0.25&ndash;0.44). Hover over a question to trace its connection.</p>
       <div class="compare" id="compare">
         <svg class="wires" id="wires"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8c3b1f"/></marker></defs></svg>
         <div class="col" id="colMine"></div>
@@ -167,12 +171,15 @@
       </div>
       <details class="how">
         <summary>How was my score calculated?</summary>
-        <p>Your whole protocol is compared with the researchers&rsquo; whole protocol:</p>
+        <p>Your questions are compared with the real protocol using <b>TF-IDF cosine similarity</b>, a standard method for measuring how similar two pieces of text are (Salton &amp; Buckley, 1988).</p>
         <ul>
-          <li><b>Coverage (80%)</b>: how much of the real protocol your questions cover, judged by key ideas (e.g. &ldquo;barriers,&rdquo; &ldquo;parents,&rdquo; &ldquo;transfer to other areas of life&rdquo;; synonyms count) and shared wording. Warm-up and closing questions count half.</li>
-          <li><b>Interview craft (20%)</b>: open-ended questions (How / What / Why / Describe / Tell me&hellip;) earn full credit; yes/no questions and questions that ask two things at once earn less.</li>
+          <li><b>Key words.</b> Each question is reduced to its key words: common words like &ldquo;the,&rdquo; &ldquo;you&rdquo; and &ldquo;describe&rdquo; are removed, words are cut to their stems (&ldquo;teaching&rdquo; &rarr; &ldquo;teach&rdquo;), and a short list of synonyms is merged (e.g. barrier / obstacle / challenge).</li>
+          <li><b>TF-IDF weights.</b> Words that appear in only a few protocol questions (like &ldquo;parents&rdquo; or &ldquo;abroad&rdquo;) count more than words that appear in almost every question (like &ldquo;students&rdquo;). Words that never appear in the protocol count fully, so off-topic wording lowers the similarity.</li>
+          <li><b>Cosine similarity.</b> Each of your questions is compared with each protocol question and its sub-questions, giving a number from 0 (no key words in common) to 1 (the same key words).</li>
+          <li><b>Matching.</b> A protocol question counts as <b>matched</b> if any of your questions reaches 0.45, and <b>close</b> if the best is 0.25&ndash;0.44.</li>
         </ul>
-        <p>The scoring is automatic and approximate. It matches ideas and words, not meaning, so a good question phrased unusually may deserve more credit than it gets. Questions without an arrow may still be excellent; discuss them.</p>
+        <p><b>Deduction Score = (matched + &frac12; &times; close) &divide; number of protocol questions &times; 100.</b> Open-ended questions are reported separately and do not change the score.</p>
+        <p>The method compares words, not meaning, so a good question phrased in unusual words can score lower than it deserves. Questions without an arrow may still be excellent; discuss them.</p>
       </details>
       <div class="vactions savebar">
         <button class="btn dark" id="saveImgBtn">&#9000; Type up my case report (save as image)</button>
@@ -231,38 +238,35 @@ const CASES=toCases(CFG);
 document.title=CFG.title||document.title;
 
 /* ============================ SCORING ============================ */
-/* ===== generic auto-scorer (no hand-written key lists needed) ===== */
-const STOPW=new Set(("a an the of in on to and or for with by at from as is are was were be been being do does did doing how what which who whom whose why when where that this these those their theirs they them its it into about between other others than there here can could would should may might must will shall has have had having i you we our ours your yours his her hers him he she s me my mine any some if so please tell explain elaborate describe share talk walk through would like way ways also many much one ones get got make made really kind sort etc e g eg things thing something anything everything yourself yourselves feel felt think thinking believe believed regarding relation related role example examples provide not no yes all most more less very just well about being own want wants wanted new present study both each either own same such then too again further once only").split(/\s+/));
-const SYN=[["barrier","obstacl","challeng","hinder","difficult","difficulti","struggl","hard","prevent","problem","constrain"],["help","support","assist","facilitat","enabl"],["defin","definit","meaning"],["importan","matter","valu","significan","worth"],["develop","grow","growth","learn","build","built"],["teacher","teach","educator","instructor","faculty","professor","staff"],["student","pupil","learner","kid","child"],["parent","famil","guardian","mother","father"],["school","campus","college","universit","institution"],["strateg","approach","techniqu","method","practic","tactic"],["relationship","rapport","bond","connect","trust"],["experienc","event","situation","moment","time","instanc","occasion"],["future","career","job","plan"],["abroad","overseas","international","travel","countr"],["transfer","apply","appli","carry","translat"],["factor","influenc","contribut","reason","cause","why"],["opinion","view","perspectiv","perceiv","percept","attitud"],["goal","purpos","aim","objectiv"],["skill","competenc","abilit"],["success","achiev","accomplish"],["year","long"],["advic","advis","recommend","suggest"],["improv","better","enhanc","strengthen"],["controvers","sensitiv"],["train","prepar","tool","resourc"],["identit","identif"],["expect","pressur"],["participat","involv","engag","join","enrol"],["benefit","gain","takeaway","outcom"],["environment","setting","classroom","climat","space"],["lead"],["languag","tongu","speak","bilingual"],["risk","danger","concern","harm","downsid"],["differ","compar","versus","vs","contrast"],["social","peer","friend"],["academ","grade","coursework"],["behavio","conduct","disciplin"],["veteran","vet","military","soldier","servic"],["sport","athlet","team","coach","game"],["global","world"],["citizen"],["decid","decision","chose","choos","pick"],["become","became","becom","start","first"],["else","add","discuss","miss"]];
+/* ===== TF-IDF cosine similarity scorer =====
+   Each protocol question (and each sub-question) is a document. Words are lower-cased,
+   common function words removed, reduced to a stem, and a short list of synonyms is
+   merged (e.g. barrier/obstacle/challenge). IDF is computed over the real protocol:
+   idf = ln((1+N)/(1+df)) + 1 (the smoothed form used by scikit-learn). A student
+   question is compared with each protocol question by cosine similarity (0 to 1);
+   words that never occur in the protocol get the highest IDF, so off-topic words lower the similarity. */
+const STOPW=new Set(("a an the of in on to and or for with by at from as is are was were be been being do does did doing how what which who whom whose why when where that this these those their theirs they them its it into about between other others than there here can could would should may might must will shall has have had having i you we our ours your yours his her hers him he she s me my mine any some if so please tell explain elaborate describe share talk walk through like way ways also many much one ones get got make made really kind sort etc e g eg things thing something anything everything yourself yourselves feel felt think thinking believe believed regarding relation related role example examples provide not no yes all most more less very just well able about being own want wants wanted new present study both each either same such then too again further once only").split(/\s+/));
+const SYN=[["barrier","obstacl","challeng","hinder","difficult","difficulti","struggl","hard","prevent","problem","constrain"],["help","support","assist","facilitat","enabl"],["defin","definit","meaning"],["importan","matter","valu","significan","worth"],["develop","grow","growth","learn","build","built"],["teacher","teach","educator","instructor","faculty","professor","staff"],["student","pupil","learner","kid","child"],["parent","famil","guardian","mother","father"],["school","campus","college","universit","institution"],["strateg","approach","techniqu","method","practic","tactic"],["relationship","rapport","bond","connect","trust"],["experienc","event","situation","moment","time","instanc","occasion"],["future","career","job","plan"],["abroad","overseas","international","travel","countr"],["transfer","apply","appli","carry","translat"],["factor","influenc","contribut","reason","cause"],["opinion","view","perspectiv","perceiv","percept","attitud"],["goal","purpos","aim","objectiv"],["skill","competenc","abilit"],["success","achiev","accomplish"],["year","long"],["advic","advis","recommend","suggest"],["improv","better","enhanc","strengthen"],["controvers","sensitiv"],["train","prepar","tool","resourc"],["identit","identif"],["expect","pressur"],["participat","involv","engag","join","enrol"],["benefit","gain","takeaway","outcom"],["environment","setting","classroom","climat","space"],["lead"],["languag","tongu","speak","bilingual"],["risk","danger","concern","harm","downsid"],["differ","compar","versus","vs","contrast"],["social","peer","friend"],["academ","grade","coursework"],["behavio","conduct","disciplin"],["veteran","vet","military","soldier","servic"],["sport","athlet","team","coach","game"],["global","world"],["citizen"],["decid","decision","chose","choos","pick"],["become","became","becom","start","first"],["else","add","discuss","miss","additional"]];
 const CANON=new Map(); SYN.forEach((g,i)=>g.forEach(p=>CANON.set(p,"§"+i)));
-function canonTok(w){
-  for(const [p,id] of CANON){ if(w.startsWith(p)) return id; }
-  return w.replace(/(ships?|ations?|ings?|ments?|ness|ities|ity|ies|ied|ed|es|ly|s)$/,"").slice(0,6);
-}
-function normT(t){return t.replace(/\[[^\]]*\]/g," ").toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9]+/g," ").trim();}
+function canonTok(w){ for(const [p,id] of CANON){ if(w.startsWith(p)) return id; } return w.replace(/(ships?|ations?|ings?|ments?|ness|ities|ity|ies|ied|ed|es|ly|s)$/,"").slice(0,6); }
+function normT(t){return String(t).replace(/\[[^\]]*\]/g," ").toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9]+/g," ").trim();}
 function keyToks(t){const out=[]; normT(t).split(" ").forEach(w=>{ if(w.length>1&&!STOPW.has(w)){ const c=canonTok(w); if(!out.includes(c)) out.push(c);} }); return out;}
-function buildIndex(allQs){ // allQs: [{t,subs}] -> per question, a list of scorable units (the question itself and each sub-question)
-  const unitsTxt=allQs.map(q=>[q.t].concat(q.subs||[]));
-  const flat=[]; unitsTxt.forEach((us,qi)=>us.forEach(u=>flat.push({qi,d:keyToks(u)})));
-  const N=flat.length, df=new Map();
-  flat.forEach(f=>f.d.forEach(k=>df.set(k,(df.get(k)||0)+1)));
-  flat.forEach(f=>{const w=f.d.map(k=>({k,w:Math.pow(Math.log(1+N/(df.get(k))),2)})); f.top=w.slice().sort((a,b)=>b.w-a.w).slice(0,6); f.all=new Set(f.d);});
-  const allW=flat.flatMap(f=>f.top.map(t=>t.w)); const mean=allW.length?allW.reduce((a,b)=>a+b,0)/allW.length:1;
-  flat.forEach(f=>{const tot=f.top.reduce((a,t)=>a+t.w,0); f.den=Math.max(tot,3*mean);});
-  return allQs.map((_,qi)=>({units:flat.filter(f=>f.qi===qi)}));
+function buildIndex(allQs){ // allQs: [{t,subs}] -> {idf, per-question units with unit vectors}
+  const flat=[]; allQs.forEach((q,qi)=>[q.t].concat(q.subs||[]).forEach(u=>flat.push({qi,d:keyToks(u)})));
+  const N=flat.length, df=new Map(); flat.forEach(f=>f.d.forEach(k=>df.set(k,(df.get(k)||0)+1)));
+  const idf=new Map(); df.forEach((v,k)=>idf.set(k,Math.log((1+N)/(1+v))+1));
+  const maxIdf=Math.log(1+N)+1; // weight for a word that never appears in the protocol (df = 0)
+  const vec=d=>{const m=new Map(); let n=0; d.forEach(k=>{ const w=idf.has(k)?idf.get(k):maxIdf; m.set(k,w); n+=w*w; }); n=Math.sqrt(n)||1; m.forEach((v,k)=>m.set(k,v/n)); return m;};
+  flat.forEach(f=>f.v=vec(f.d));
+  return {vec, qs:allQs.map((_,qi)=>flat.filter(f=>f.qi===qi))};
 }
-function unitScore(ks, u){
-  const tot=u.den||1; let m=0; u.top.forEach(x=>{ if(ks.has(x.k)) m+=x.w; });
-  let cov=m/tot; if(u.top.length>=4) cov=Math.min(1,cov*1.35);
-  let inter=0; ks.forEach(k=>{ if(u.all.has(k)) inter++; });
-  const dice=(ks.size+u.all.size)?2*inter/(ks.size+u.all.size):0;
-  return Math.round(100*(.7*cov+.3*Math.min(1,dice*1.8)));
-}
-function pairScoreAuto(mine, idx){
-  const ks=new Set(keyToks(mine)); if(!ks.size) return 0;
-  return Math.max(0,...idx.units.map(u=>unitScore(ks,u)));
+function cosine(a,b){ let s=0; a.forEach((v,k)=>{ if(b.has(k)) s+=v*b.get(k); }); return s; }
+function similarity(mineText, IX, qi){ // best cosine between a student question and protocol question qi (or any of its sub-questions)
+  const v=IX.vec(keyToks(mineText)); if(!v.size) return 0;
+  return Math.max(0,...IX.qs[qi].map(u=>cosine(v,u.v)));
 }
 
+const MATCH=0.45, CLOSE=0.25;
 function craft(q){
   const t=q.trim().toLowerCase().replace(/^["“(]+/,""); let s;
   if(/^(how|what|why|describe|tell me|tell us|in what|to what|talk about|walk me|share|explain|can you describe|could you describe|can you tell|could you tell|can you explain|could you explain|can you talk|which|when|where|who|think about|please describe|please tell|please explain)\b/.test(t)) s=1;
@@ -286,19 +290,19 @@ function evaluate(c){
   const my=[]; c.sections.forEach((sec,si)=>{ parseQs(boxVal(si)).forEach((o,k)=>my.push({t:o.t,si,k,id:"m"+my.length})); });
   const valid=my.filter(o=>o.t.split(/\s+/).length>=3);
   const real=[]; c.sections.forEach((sec,si)=>sec.qs.forEach((q,k)=>real.push({q,si,k,id:"r"+real.length})));
-  const IDX=buildIndex(real.map(r=>({t:r.q.raw,subs:r.q.rawSubs})));
-  const M=valid.map(o=>real.map((r,j)=>pairScoreAuto(o.t,IDX[j])));
-  let wsum=0,ssum=0;
-  real.forEach((r,j)=>{let bs=0; valid.forEach((o,i)=>{bs=Math.max(bs,M[i][j]);}); const w=r.q.warm?.5:1; wsum+=w; ssum+=w*bs;});
-  const links=[]; valid.forEach((o,i)=>{let best=-1,bs=0; real.forEach((r,j)=>{if(M[i][j]>bs){bs=M[i][j];best=j;}}); if(best>=0&&bs>=50) links.push({from:o.id,to:real[best].id,s:bs});});
-  const coverage=wsum?ssum/wsum:0;
-  const craftAvg=valid.length?valid.reduce((a,o)=>a+craft(o.t),0)/valid.length:0;
-  return {my,real,links,overall:Math.round(.8*coverage+20*craftAvg),count:valid.length};
+  const IX=buildIndex(real.map(r=>({t:r.q.raw,subs:r.q.rawSubs})));
+  const S=valid.map(o=>real.map((r,j)=>similarity(o.t,IX,j)));
+  real.forEach((r,j)=>{ r.best=valid.reduce((m,o,i)=>Math.max(m,S[i][j]),0); r.status=r.best>=MATCH?"match":r.best>=CLOSE?"close":"none"; });
+  const matched=real.filter(r=>r.status==="match").length, close=real.filter(r=>r.status==="close").length;
+  const links=[]; valid.forEach((o,i)=>{let best=-1,bs=0; real.forEach((r,j)=>{if(S[i][j]>bs){bs=S[i][j];best=j;}}); if(best>=0&&bs>=CLOSE) links.push({from:o.id,to:real[best].id,s:bs,strong:bs>=MATCH});});
+  const openQs=valid.filter(o=>craft(o.t)>=1).length;
+  const overall=real.length?Math.round(100*(matched+0.5*close)/real.length):0;
+  return {my,real,links,overall,matched,close,total:real.length,openQs,count:valid.length};
 }
 const RANKS=[
   [70,"Sherlock Holmes","“Elementary.” Your protocol could almost pass for the original."],
-  [55,"Consulting Detective","Sharp work. Only a few lines of questioning escaped you."],
-  [38,"Dr. Watson","A capable protocol, though Holmes would point out what you left unasked."],
+  [50,"Consulting Detective","Sharp work. Only a few lines of questioning escaped you."],
+  [35,"Dr. Watson","A capable protocol, though Holmes would point out what you left unasked."],
   [20,"Inspector Lestrade","You found the trail, but large parts of the interview went unasked."],
   [0,"Baffled Constable","“You see, but you do not observe.” Revisit the clues and try again."]
 ];
@@ -366,8 +370,8 @@ function reveal(animate=true){
   const s=store.get(c.id)||{}; s.v=allVals(); s.result=R.overall; s.locked=true; store.set(c.id,s);
   const rank=RANKS.find(r=>R.overall>=r[0]);
   $("rankName").textContent=rank[1]; $("quip").textContent=rank[2];
-  $("breakdown").innerHTML="";
-  const linkedFrom=new Set(R.links.map(l=>l.from)), linkedTo=new Set(R.links.map(l=>l.to));
+  $("breakdown").innerHTML=`<div><b>${R.matched} of ${R.total}</b>protocol questions matched</div><div><b>${R.close}</b>more were close (half credit)</div><div><b>${R.openQs} of ${R.count}</b>of your questions were open-ended</div>`;
+  const linkedFrom=new Set(R.links.map(l=>l.from)), linkedTo=new Set(R.real.filter(r=>r.status==="match").map(r=>r.id)), closeTo=new Set(R.real.filter(r=>r.status==="close").map(r=>r.id));
   const multi=c.sections.length>1;
   $("colMine").innerHTML=`<h4 class="colh">Your questions</h4>`+c.sections.map((sec,si)=>{
     const items=R.my.filter(o=>o.si===si);
@@ -375,7 +379,7 @@ function reveal(animate=true){
   }).join("");
   $("colReal").innerHTML=`<h4 class="colh">${c.protoTitle}</h4>`+c.sections.map((sec,si)=>
     (multi?`<h5>${sec.h}</h5>`:"")+(sec.brief?`<p class="brief2">${sec.brief}</p>`:"")+
-    R.real.filter(r=>r.si===si).map(r=>`<div class="it ${linkedTo.has(r.id)?"linked":""}" data-id="${r.id}"><span class="num">${r.k+1}.</span>${r.q.t}${r.q.subs?`<ol type="${r.q.subs.length>4?"i":"a"}">${r.q.subs.map(x=>`<li>${x}</li>`).join("")}</ol>`:""}</div>`).join("")
+    R.real.filter(r=>r.si===si).map(r=>`<div class="it ${linkedTo.has(r.id)?"linked":closeTo.has(r.id)?"closem":""}" data-id="${r.id}"><span class="num">${r.k+1}.</span>${r.q.t}${r.q.subs?`<ol type="${r.q.subs.length>4?"i":"a"}">${r.q.subs.map(x=>`<li>${x}</li>`).join("")}</ol>`:""}</div>`).join("")
   ).join("");
   wireHover();
   current._report=buildReport(c,R,rank);
@@ -392,7 +396,7 @@ function reveal(animate=true){
 function drawWires(){
   if(!lastR||!$("verdict").classList.contains("show")) return;
   const svg=$("wires"), box=$("compare").getBoundingClientRect();
-  svg.querySelectorAll("path.w").forEach(p=>p.remove());
+  svg.querySelectorAll("path.w,text.wl").forEach(p=>p.remove());
   lastR.links.forEach(l=>{
     const a=document.querySelector(`#colMine .it[data-id="${l.from}"]`), b=document.querySelector(`#colReal .it[data-id="${l.to}"]`);
     if(!a||!b) return;
@@ -401,16 +405,19 @@ function drawWires(){
     const dx=Math.max(30,(x2-x1)*.6);
     const p=document.createElementNS("http://www.w3.org/2000/svg","path");
     p.setAttribute("d",`M${x1} ${y1} C${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`);
-    p.setAttribute("class","w"); p.setAttribute("marker-end","url(#ah)");
+    p.setAttribute("class","w"+(l.strong?"":" weak")); p.setAttribute("marker-end","url(#ah)");
     p.dataset.from=l.from; p.dataset.to=l.to;
     svg.appendChild(p);
+    const tx=document.createElementNS("http://www.w3.org/2000/svg","text");
+    tx.setAttribute("x",x1+22); tx.setAttribute("y",y1-5); tx.setAttribute("class","wl"+(l.strong?"":" weak"));
+    tx.textContent=l.s.toFixed(2); tx.dataset.from=l.from; tx.dataset.to=l.to; svg.appendChild(tx);
   });
 }
 function wireHover(){
   const svg=$("wires");
   document.querySelectorAll("#compare .it").forEach(el=>{
     el.onmouseenter=()=>{
-      const id=el.dataset.id; const ps=[...svg.querySelectorAll("path.w")].filter(p=>p.dataset.from===id||p.dataset.to===id);
+      const id=el.dataset.id; const ps=[...svg.querySelectorAll("path.w,text.wl")].filter(p=>p.dataset.from===id||p.dataset.to===id);
       if(!ps.length) return;
       svg.classList.add("dim");
       ps.forEach(p=>{p.classList.add("on"); document.querySelectorAll(`#compare .it[data-id="${p.dataset.from}"],#compare .it[data-id="${p.dataset.to}"]`).forEach(x=>x.classList.add("on"));});
@@ -480,7 +487,7 @@ async function renderReportPNG(){
   const meas=document.createElement("canvas").getContext("2d");
   const BODY=`14px ${TW}`, SMALL=`13px ${TW}`;
   // ---- layout ----
-  const HEAD=420, mine=[], real=[], heads=[];
+  const HEAD=490, mine=[], real=[], heads=[];
   const layoutCol=(isMine)=>{
     let yy=HEAD+64;
     c.sections.forEach((sec,si)=>{
@@ -536,7 +543,7 @@ async function renderReportPNG(){
   field("DATE FILED:",new Date().toLocaleString([], {dateStyle:"long",timeStyle:"short"}));
   ctx.font=`14px ${TW}`; const re=wrapText(ctx,((CFG.cases[CASES.indexOf(c)].cite||"—")+(CFG.cases[CASES.indexOf(c)].url?" "+CFG.cases[CASES.indexOf(c)].url:"")),CR-CL-150-250);
   type("RE:",CL,y,L,"#5a3e28"); re.forEach((l,i)=>type(l,CL+150,y+i*21,`14px ${TW}`)); y+=re.length*21+12;
-  type("FINDING:",CL,y,L,"#5a3e28"); type(`Deduction score of ${R.overall} out of 100.`,CL+150,y,L); y+=26;
+  type("FINDING:",CL,y,L,"#5a3e28"); type(`Score ${R.overall}/100. Matched ${R.matched} of ${R.total} protocol questions; ${R.close} close.`,CL+150,y,L); y+=26;
   type("RANK:",CL,y,L,"#5a3e28"); type(rank[1].toUpperCase(),CL+150,y,`18px ${TW}`); y+=26;
   ctx.font=`14px ${TW}`; wrapText(ctx,rank[2],CR-CL-150-250).forEach((l,i)=>type(l,CL+150,y+i*20,`14px ${TW}`,"#4a3020"));
   // red rubber stamp with score
@@ -567,12 +574,13 @@ async function renderReportPNG(){
   R.links.forEach(l=>{
     const a=mine.find(b=>b.id===l.from), b=real.find(r=>r.id===l.to); if(!a||!b) return;
     const x1=LX+CW, y1=a.y+a.h/2, x2=RX-3, y2=b.y+Math.min(b.h/2,22), dx=GUT*.55;
-    ctx.globalAlpha=.85; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.bezierCurveTo(x1+dx,y1+(rand()-.5)*6,x2-dx,y2,x2-8,y2); ctx.stroke();
+    ctx.globalAlpha=.85; ctx.setLineDash(l.strong?[]:[6,5]); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.bezierCurveTo(x1+dx,y1,x2-dx,y2,x2-8,y2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font=`12px ${TW}`; ctx.textAlign="center"; ctx.lineWidth=4; ctx.strokeStyle="#f2e6c9"; ctx.strokeText(l.s.toFixed(2),x1+24,y1-6); ctx.fillText(l.s.toFixed(2),x1+24,y1-6); ctx.textAlign="left"; ctx.lineWidth=2; ctx.strokeStyle="#a3271a";
     ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-11,y2-6); ctx.lineTo(x2-11,y2+6); ctx.closePath(); ctx.fill();
     ctx.beginPath(); ctx.arc(x1,y1,3.5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
   });
-  center("Red arrows connect your questions to similar questions in the original protocol.",H-92,`13px ${TW}`,"#5a3e28");
-  center("Score = 80% protocol coverage + 20% interview craft",H-72,`13px ${TW}`,"#5a3e28");
+  center("Red arrows link each question to its most similar protocol question (TF-IDF cosine similarity; solid = match 0.45+, dashed = close 0.25-0.44).",H-92,`13px ${TW}`,"#5a3e28");
+  center(`Score = (matched + 1/2 x close) / ${R.total} protocol questions x 100.   Open-ended questions: ${R.openQs} of ${R.count}.`,H-72,`13px ${TW}`,"#5a3e28");
   return cv;
 }
 $("saveImgBtn").onclick=async()=>{
