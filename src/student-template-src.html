@@ -43,7 +43,7 @@
 .box{margin-bottom:16px}
 .box label{display:block;font-family:"IM Fell English SC",serif;font-size:19px;color:var(--brown);margin-bottom:2px}
 .box label small{font-family:"Special Elite",monospace;font-size:13px;color:var(--rust);margin-left:6px}
-.box textarea{width:100%;min-height:300px;resize:vertical;border:1px solid var(--line);border-radius:2px;padding:4px 12px;font-family:"Special Elite",monospace;font-size:15px;line-height:23px;color:var(--ink);background:repeating-linear-gradient(transparent 0 22px, rgba(140,100,60,.22) 22px 23px),#fbf4e3;background-attachment:local;background-position:0 4px}
+.box textarea{width:100%;resize:vertical;border:1px solid var(--line);border-radius:2px;padding:4px 12px;font-family:"Special Elite",monospace;font-size:15px;line-height:23px;color:var(--ink);background:repeating-linear-gradient(transparent 0 22px, rgba(140,100,60,.22) 22px 23px),#fbf4e3;background-attachment:local;background-position:0 4px}
 .box textarea.short{min-height:170px}
 .box textarea:focus{outline:2px solid var(--brown);outline-offset:1px}
 .box textarea[readonly]{background-color:#efe4cb;color:var(--ink2)}
@@ -131,7 +131,7 @@
           <svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><rect x="58" y="62" width="14" height="40" rx="5" transform="rotate(-45 65 82)" fill="#3b2210"/><circle cx="40" cy="40" r="28" fill="#f3e7cc" stroke="#6b4226" stroke-width="8"/></svg>
           Your Interview Protocol
         </h3>
-        <p class="sub">Write the interview questions you would ask participants to answer this study&rsquo;s research questions. <b>Number each question</b> (1, 2, 3&hellip;) and start each one on a new line.</p>
+        <p class="sub">Write the interview questions you would ask participants to answer this study&rsquo;s research questions. Write one question after each number. Leave a number blank if you can&rsquo;t think of one.</p>
         <div class="target"><span>The real protocol had</span><b id="targetN">0</b><span id="targetS">questions.</span></div>
         <div id="boxes"></div>
         <button class="btn dark big" id="compareBtn" disabled>Ready to Compare</button>
@@ -323,7 +323,9 @@ function renderCases(){
 const boxVal=i=>{const t=document.querySelector(`#boxes textarea[data-i="${i}"]`); return t?t.value:"";};
 function renderBoxes(vals){
   const c=current, multi=c.sections.length>1;
-  $("boxes").innerHTML=c.sections.map((sec,i)=>`<div class="box">${multi?`<label for="b${i}">${sec.h}<small>(${sec.qs.length} questions)</small></label>`:""}<textarea id="b${i}" data-i="${i}" class="${multi&&sec.qs.length<6?"short":""}" ${locked?"readonly":""} aria-label="${multi?sec.h:"Your interview questions"}" placeholder="${i===0?"1. \n2. \n3. ":"1. \n2. "}">${escH(vals[i]||"")}</textarea></div>`).join("");
+  const nums=n=>Array.from({length:n},(_,k)=>(k+1)+". ").join("\n");
+  $("boxes").innerHTML=c.sections.map((sec,i)=>{const n=sec.qs.length; const v=(vals[i]!=null&&vals[i]!=="")?vals[i]:nums(n);
+    return `<div class="box">${multi?`<label for="b${i}">${sec.h}<small>(${n} question${n>1?"s":""})</small></label>`:""}<textarea id="b${i}" data-i="${i}" rows="${n+1}" style="min-height:${Math.round(Math.max(5,n*1.7+2)*23+10)}px" ${locked?"readonly":""} aria-label="${multi?sec.h:"Your interview questions"}">${escH(v)}</textarea></div>`;}).join("");
   document.querySelectorAll("#boxes textarea").forEach(t=>t.addEventListener("input",save));
 }
 const allVals=()=>current.sections.map((_,i)=>boxVal(i));
@@ -331,7 +333,7 @@ function save(){ if(!current) return; const s=store.get(current.id)||{}; s.v=all
 function updateBtn(){
   const k=current.sections.reduce((a,_,i)=>a+parseQs(boxVal(i)).filter(o=>o.t.split(/\s+/).length>=3).length,0);
   $("compareBtn").disabled=locked||k<3;
-  $("hint").textContent=locked?"Case closed. Reopen it to start fresh.":k<3?`Write at least 3 numbered questions to unseal the file (${k}/3).`:`${k} question${k>1?"s":""} drafted.`;
+  $("hint").textContent=locked?"Case closed. Reopen it to start fresh.":k<3?`Write at least 3 questions to unseal the file (${k}/3).`:`${k} question${k>1?"s":""} drafted.`;
 }
 
 function openCase(c){

@@ -27,7 +27,7 @@ python3 build.py
 
 ## Starter cases
 
-The builder includes four starter cases taken from real open-access studies. They are reproduced under each article's Creative Commons license, and the citation, link and license are shown to students with each case.
+New activities start with four starter cases taken from real open-access studies; teachers can delete them, add them back, or add their own cases. They are reproduced under each article's Creative Commons license, and the citation, link and license are shown to students with each case.
 
 | Case | Source | License |
 |---|---|---|
