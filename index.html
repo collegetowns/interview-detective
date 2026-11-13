@@ -152,7 +152,7 @@ footer a{color:var(--tan2)}
     <main class="paper ed" id="editor"></main>
   </div>
 
-  <footer>Interview Detective &middot; a <a href="https://collegetowns.org">College Towns</a> project</footer>
+  <footer>Interview Detective &middot; a <a href="https://collegetowns.org">College Towns</a> project &middot; More free apps in the <a href="https://applocker.collegetowns.org/" target="_blank" rel="noopener">College Towns App Locker</a></footer>
 </div>
 
 <div class="bar"><div class="in">
@@ -456,6 +456,10 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDialog(); if
 function starterCase(s){ const c=Object.assign(blankCase(),JSON.parse(JSON.stringify(s))); c.key=uid(); c.clues.forEach(k=>k.key=uid()); c.sections.forEach(x=>x.key=uid()); return c; }
 function seedStarters(){ P.cases=STARTERS.map(starterCase); }
 (async()=>{ await idb(); const saved=await idbGet("project"); if(saved&&saved.cases&&saved.cases.length){ P=saved; } else { seedStarters(); touch(); } sel=P.cases[0]?.key||"settings"; render(); })();
+/* Keep the footer clear of the fixed button bar, which is taller on phones */
+(function(){ const bar=document.querySelector('.bar'); if(!bar) return;
+  const fit=()=>{ document.body.style.paddingBottom=(bar.offsetHeight+20)+'px'; };
+  addEventListener('resize', fit); fit(); })();
 </script>
 </body>
 </html>
