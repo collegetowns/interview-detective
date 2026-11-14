@@ -231,9 +231,10 @@ function toCases(cfg){
     const rqs=(k.rqs||[]).filter(x=>x.trim());
     if(rqs.length) ex.push({t:"The Research Questions",s:"What the investigators set out to learn",html:(k.rqIntro?paras(k.rqIntro):"")+`<ul class="plainlist">${rqs.map(r=>`<li>${escH(r)}</li>`).join("")}</ul>`});
     (k.clues||[]).forEach(cl=>{ if(!(cl.title||cl.text||(cl.images||[]).length)) return;
-      ex.push({t:escH(cl.title||"Additional Clue"),s:escH(cl.subtitle||"Recovered evidence"),html:paras(cl.text),imgs:(cl.images||[]).map(im=>({src:im.src,cap:escH(im.cap||"")}))}); });
+      ex.push({t:escH(cl.title||"Additional Clue"),s:escH(cl.subtitle||"Recovered evidence"),html:paras(cl.text),imgs:(cl.images||[]).filter(im=>/^data:image\//.test(im.src||"")).map(im=>({src:escH(im.src),cap:escH(im.cap||"")}))}); });
     const multi=(k.sections||[]).length>1;
-    const src=(k.url?` <a href="${escH(k.url)}" target="_blank" rel="noopener">${escH(k.url)}</a>`:"")+(k.license?`<span class="lic"> &middot; Licensed under ${escH(k.license)}</span>`:"");
+    const kurl=/^https?:\/\//i.test(k.url||"")?k.url:"";
+    const src=(kurl?` <a href="${escH(kurl)}" target="_blank" rel="noopener">${escH(kurl)}</a>`:"")+(k.license?`<span class="lic"> &middot; Licensed under ${escH(k.license)}</span>`:"");
     return {id:"c"+(i+1),num:"No. "+(i+1),name:escH(k.name||"Untitled case"),src,rawName:k.name||"Untitled case",tagline:escH(k.tagline||""),title:escH(k.title||k.name||""),cite:escH(k.cite||""),
       exhibits:ex, protoTitle:escH(k.protoTitle||"The Interview Protocol"),
       sections:(k.sections||[]).map((sec,si)=>({h:multi?escH(sec.h||("Section "+(si+1))):null, rawH:sec.h||("Section "+(si+1)), brief:sec.brief?escH(sec.brief):"", rawBrief:sec.brief||"",

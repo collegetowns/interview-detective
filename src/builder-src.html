@@ -104,6 +104,9 @@ legend .tag.key{background:var(--ok)}
 footer{color:var(--tan);text-align:center;font-size:14.5px;margin-top:30px;opacity:.8;font-style:italic}
 footer a{color:var(--tan2)}
 </style>
+<!-- Private visitor counter (GoatCounter). Only the account owner can see the dashboard. -->
+<script>window.goatcounter = { path: function(p){ return location.host + p } };</script>
+<script data-goatcounter="https://collegetowns.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -152,7 +155,7 @@ footer a{color:var(--tan2)}
     <main class="paper ed" id="editor"></main>
   </div>
 
-  <footer>Interview Detective &middot; a <a href="https://collegetowns.org">College Towns</a> project</footer>
+  <footer>Interview Detective &middot; a <a href="https://collegetowns.org">College Towns</a> project &middot; More free apps in the <a href="https://applocker.collegetowns.org/" target="_blank" rel="noopener">College Towns App Locker</a></footer>
 </div>
 
 <div class="bar"><div class="in">
@@ -273,10 +276,12 @@ function caseIssues(c){
 }
 
 /* ---------- export ---------- */
+/* Links: add https:// when it is missing; only web links are kept */
+function safeUrl(u){ u=String(u||"").trim(); if(!u) return ""; if(!/^[a-z][a-z0-9+.-]*:/i.test(u)) u="https://"+u; return /^https?:\/\//i.test(u)?u:""; }
 function toConfig(){
   return {id:P.id,title:P.title.trim()||"The Case of the Missing Interview Questions",subtitle:P.subtitle.trim(),synonyms:(P.synonyms!=null?P.synonyms:DEFAULT_SYNONYMS),
     cases:P.cases.filter(c=>caseIssues(c).filter(x=>!x.startsWith("has no clues")).length===0).map(c=>({
-      name:c.name.trim(),tagline:c.tagline.trim(),title:c.title.trim(),cite:c.cite.trim(),url:(c.url||"").trim(),license:(c.license||"").trim(),abstract:c.abstract,rqIntro:c.rqIntro.trim(),rqs:lines(c.rqsText),
+      name:c.name.trim(),tagline:c.tagline.trim(),title:c.title.trim(),cite:c.cite.trim(),url:safeUrl(c.url),license:(c.license||"").trim(),abstract:c.abstract,rqIntro:c.rqIntro.trim(),rqs:lines(c.rqsText),
       clues:c.clues.map(k=>({title:k.title.trim(),subtitle:(k.subtitle||"").trim(),text:k.text,images:k.images.map(i=>({src:i.src,cap:i.cap}))})),
       protoTitle:c.protoTitle.trim()||"Interview Protocol",
       sections:c.sections.filter(s=>parseProtocol(s.text).length).map(s=>({h:s.h.trim(),warm:!!s.warm,brief:s.brief.trim(),qs:parseProtocol(s.text)}))
@@ -291,7 +296,7 @@ function buildStudentHTML(){
 function fromConfig(cfg){
   const roman=["i","ii","iii","iv","v","vi","vii","viii","ix","x"];
   return {id:cfg.id||uid(),title:cfg.title||"",subtitle:cfg.subtitle||"",synonyms:(cfg.synonyms!=null?cfg.synonyms:undefined),cases:(cfg.cases||[]).map(k=>({key:uid(),name:k.name||"",tagline:k.tagline||"",title:k.title||"",cite:k.cite||"",url:k.url||"",license:k.license||"",abstract:k.abstract||"",rqIntro:k.rqIntro||"",rqsText:(k.rqs||[]).join("\n"),
-    clues:(k.clues||[]).map(cl=>({key:uid(),title:cl.title||"",subtitle:cl.subtitle||"",text:cl.text||"",images:(cl.images||[]).map(i=>({src:i.src,cap:i.cap||""}))})),
+    clues:(k.clues||[]).map(cl=>({key:uid(),title:cl.title||"",subtitle:cl.subtitle||"",text:cl.text||"",images:(cl.images||[]).map(i=>({src:String(i.src||""),cap:String(i.cap||"")})).filter(i=>/^data:image\//.test(i.src))})),
     protoTitle:k.protoTitle||"Interview Protocol",
     sections:(k.sections||[]).map(s=>({key:uid(),h:s.h||"",warm:!!s.warm,brief:s.brief||"",
       text:(s.qs||[]).map(q=>[q.t].concat((q.subs||[]).map((x,j)=>"  "+"abcdefghijklmnopqrstuvwxyz"[j]+". "+x)).join("\n")).join("\n")}))}))};
@@ -354,7 +359,7 @@ function render(){
           <div class="row2">${field("Clue title","",inp(`clue.${ki}.title`,k.title,"e.g. Findings: Coding Table"))}${field("Subtitle (optional)","",inp(`clue.${ki}.subtitle`,k.subtitle||"","e.g. Recovered from the researchers’ desk"))}</div>
           ${field("Text (optional)","",ta(`clue.${ki}.text`,k.text))}
           <div class="f"><label>Images (optional)</label><p class="help">PNG or JPG screenshots of tables or figures. Students can magnify them. Large images are resized automatically.</p>
-            <div class="imgs">${k.images.map((im,ii)=>`<div class="imgcard"><img src="${im.src}" alt=""><input type="text" data-path="img.${ki}.${ii}.cap" value="${esc(im.cap)}" placeholder="Caption"><button data-act="delimg" data-i="${ki}" data-j="${ii}">Remove image</button></div>`).join("")}</div>
+            <div class="imgs">${k.images.map((im,ii)=>`<div class="imgcard"><img src="${esc(im.src)}" alt=""><input type="text" data-path="img.${ki}.${ii}.cap" value="${esc(im.cap)}" placeholder="Caption"><button data-act="delimg" data-i="${ki}" data-j="${ii}">Remove image</button></div>`).join("")}</div>
             <label class="btn small drop">+ Add images<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple class="hidden" data-act="addimg" data-i="${ki}"></label>
           </div></div>`).join("")}
         <button class="btn small" data-act="addclue">+ Add a clue</button>
@@ -456,6 +461,10 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDialog(); if
 function starterCase(s){ const c=Object.assign(blankCase(),JSON.parse(JSON.stringify(s))); c.key=uid(); c.clues.forEach(k=>k.key=uid()); c.sections.forEach(x=>x.key=uid()); return c; }
 function seedStarters(){ P.cases=STARTERS.map(starterCase); }
 (async()=>{ await idb(); const saved=await idbGet("project"); if(saved&&saved.cases&&saved.cases.length){ P=saved; } else { seedStarters(); touch(); } sel=P.cases[0]?.key||"settings"; render(); })();
+/* Keep the footer clear of the fixed button bar, which is taller on phones */
+(function(){ const bar=document.querySelector('.bar'); if(!bar) return;
+  const fit=()=>{ document.body.style.paddingBottom=(bar.offsetHeight+20)+'px'; };
+  addEventListener('resize', fit); fit(); })();
 </script>
 </body>
 </html>
